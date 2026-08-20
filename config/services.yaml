@@ -1,0 +1,108 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    _instanceof:
+        VTInnovations\SimpleNotifyBundle\Gateway\GatewayInterface:
+            tags: ['simple_notify.gateway']
+        VTInnovations\SimpleNotifyBundle\Token\TokenProviderInterface:
+            tags: ['simple_notify.token_provider']
+
+    VTInnovations\SimpleNotifyBundle\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/ContaoManager/'
+            - '../src/Model/'
+            # Value objects, not services: they take runtime data, not dependencies.
+            - '../src/Event/'
+            - '../src/Exception/'
+            - '../src/Message/{Attachment,PreparedMessage,RenderedMessage}.php'
+            - '../src/SendResult.php'
+            # Registered explicitly below, once per notification type
+            - '../src/Token/TriggerTokenProvider.php'
+
+    simple_notify.token_provider.member:
+        class: VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider
+        arguments:
+            $type: 'member'
+            $definitions: !php/const VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider::MEMBER
+        tags: ['simple_notify.token_provider']
+
+    simple_notify.token_provider.comment:
+        class: VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider
+        arguments:
+            $type: 'comment'
+            $definitions: !php/const VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider::COMMENT
+        tags: ['simple_notify.token_provider']
+
+    simple_notify.token_provider.newsletter:
+        class: VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider
+        arguments:
+            $type: 'newsletter'
+            $definitions: !php/const VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider::NEWSLETTER
+        tags: ['simple_notify.token_provider']
+
+    TijsVerkoyen\CssToInlineStyles\CssToInlineStyles: ~
+
+    VTInnovations\SimpleNotifyBundle\Message\ImageEmbedder:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    # Dumped messages go under var/, which is already outside the web root
+    VTInnovations\SimpleNotifyBundle\Gateway\FileGateway:
+        arguments:
+            $defaultDir: '%kernel.project_dir%/var/simple-notify-mail'
+
+    VTInnovations\SimpleNotifyBundle\Gateway\GatewayRegistry:
+        arguments:
+            $gateways: !tagged_iterator simple_notify.gateway
+
+    VTInnovations\SimpleNotifyBundle\Token\TokenRegistry:
+        arguments:
+            $providers: !tagged_iterator simple_notify.token_provider
+
+    # Gateways log skipped addresses and unreadable attachments; route that to the same
+    # channel Contao uses for its own errors so it shows up in the system log.
+    VTInnovations\SimpleNotifyBundle\Gateway\EmailGateway:
+        arguments:
+            $logger: '@monolog.logger.contao.error'
+
+    VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter:
+        public: true
+        arguments:
+            $logger: '@monolog.logger.contao.error'
+
+    VTInnovations\SimpleNotifyBundle\EventListener\SendLogListener:
+        arguments:
+            $enabled: '%vt_innovations_simple_notify.log.enabled%'
+            $storeBody: '%vt_innovations_simple_notify.log.store_body%'
+
+    VTInnovations\SimpleNotifyBundle\EventListener\MailerEventListener:
+        arguments:
+            $enabled: '%vt_innovations_simple_notify.log.enabled%'
+
+    VTInnovations\SimpleNotifyBundle\Cron\RetryFailedCron:
+        arguments:
+            $logger: '@monolog.logger.contao.cron'
+            $enabled: '%vt_innovations_simple_notify.log.retry_failed%'
+            $maxAttempts: '%vt_innovations_simple_notify.log.max_attempts%'
+
+    VTInnovations\SimpleNotifyBundle\Cron\PruneLogCron:
+        arguments:
+            $logger: '@monolog.logger.contao.cron'
+            $retentionDays: '%vt_innovations_simple_notify.log.retention_days%'
+
+    VTInnovations\SimpleNotifyBundle\EventListener\DataContainer\LogListener:
+        arguments:
+            $csrfTokenName: '%contao.csrf_token_name%'
+
+    VTInnovations\SimpleNotifyBundle\Controller\TestSendController:
+        arguments:
+            $csrfTokenName: '%contao.csrf_token_name%'
+        tags: ['controller.service_arguments']
+
+    VTInnovations\SimpleNotifyBundle\Controller\MessagePreviewController:
+        tags: ['controller.service_arguments']

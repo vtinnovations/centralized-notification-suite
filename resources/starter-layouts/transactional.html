@@ -1,0 +1,23 @@
+<!--
+    Plain transactional layout: one centred column, no images, nothing to configure.
+    Table-based and with inline-safe CSS because Outlook renders mail through Word, which
+    ignores float, flexbox, grid and most positioning.
+-->
+<table role="presentation" class="sn-outer" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td align="center" class="sn-outer-cell">
+            <table role="presentation" class="sn-card" width="600" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="sn-body">
+                        ##message_body##
+                    </td>
+                </tr>
+                <tr>
+                    <td class="sn-footer">
+                        You are receiving this message because of an action on {{env::host}}.
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

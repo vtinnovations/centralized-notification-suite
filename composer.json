@@ -1,0 +1,49 @@
+{
+    "name": "vtinnovations/simple-notify-bundle",
+    "description": "A simplified Contao 5 notification center: token-based, gateway-driven notifications triggered from a single service call.",
+    "type": "contao-bundle",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "VTInnovations"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "contao/core-bundle": "^5.7",
+        "symfony/mailer": "^7.0",
+        "symfony/mime": "^7.0",
+        "tijsverkoyen/css-to-inline-styles": "^2.2"
+    },
+    "require-dev": {
+        "contao/manager-plugin": "^2.0",
+        "phpunit/phpunit": "^11.0",
+        "symfony/http-client": "^7.0"
+    },
+    "suggest": {
+        "symfony/http-client": "Required for the webhook gateway (Slack, Teams, Zapier, ...)"
+    },
+    "autoload": {
+        "psr-4": {
+            "VTInnovations\\SimpleNotifyBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "VTInnovations\\SimpleNotifyBundle\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "@php vendor/bin/phpunit",
+        "analyse": "@php vendor/bin/phpstan analyse",
+        "cs": "@php vendor/bin/php-cs-fixer fix --dry-run --diff"
+    },
+    "keywords": ["contao", "notification", "email", "notification-center", "transactional-email"],
+    "extra": {
+        "contao-manager-plugin": "VTInnovations\\SimpleNotifyBundle\\ContaoManager\\Plugin"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
