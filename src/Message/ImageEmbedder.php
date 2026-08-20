@@ -18,6 +18,15 @@ class ImageEmbedder
 {
     private const EMBEDDABLE = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'];
 
+    /**
+     * Content IDs are addr-specs: Symfony's DataPart::setContentId() rejects anything
+     * without an "@", and Email::prepareParts() pairs a "cid:" reference with its part by
+     * comparing the reference against the content ID verbatim. Both the ID and the src
+     * therefore have to carry this suffix, or the image is demoted to a plain attachment
+     * and the <img> renders broken.
+     */
+    private const CID_DOMAIN = '@simple-notify';
+
     public function __construct(
         private readonly string $projectDir,
         private readonly RequestStack $requestStack,
@@ -50,8 +59,8 @@ class ImageEmbedder
                         $path,
                         basename($path),
                         mime_content_type($path) ?: null,
-                        // Content IDs must be unique within the message and stable per file
-                        'sn'.substr(hash('xxh128', $path), 0, 16),
+                        // Unique within the message and stable per file
+                        'sn'.substr(hash('xxh128', $path), 0, 16).self::CID_DOMAIN,
                     );
                 }
 

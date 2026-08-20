@@ -67,6 +67,13 @@ All notable changes to this project are documented here. This project follows
 
 ### Fixed
 
+- **Embedded images made the whole message fail to send.** `ImageEmbedder` generated a bare
+  hash as the content ID, but Symfony's `DataPart::setContentId()` rejects any ID without an
+  `@`, so a message with *Embed images* enabled and a resolvable local image threw inside the
+  gateway and was recorded as failed — nothing was delivered, attachments included. Content IDs
+  are now addr-specs (`sn<hash>@simple-notify`) and the `src` references them verbatim, which is
+  also what lets Symfony pair the `cid:` reference with its part instead of demoting the image
+  to a plain attachment.
 - Invalid recipient addresses are skipped and logged instead of aborting the whole message.
 - A message with neither a text nor an HTML part is reported as a configuration error rather
   than handed to the transport.
