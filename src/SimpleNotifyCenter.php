@@ -78,7 +78,7 @@ class SimpleNotifyCenter
                 ));
 
                 $result->add($prepared->message->messageId, SendResult::STATUS_SKIPPED, $prepared->problem);
-                $this->dispatchPostSend($prepared, $source, false, new SimpleNotifyException((string) $prepared->problem));
+                $this->dispatchPostSend($prepared, $source, SendResult::STATUS_SKIPPED, new SimpleNotifyException((string) $prepared->problem));
 
                 continue;
             }
@@ -176,7 +176,7 @@ class SimpleNotifyCenter
         if ($preSend->isCancelled()) {
             $reason = $preSend->getCancelReason() ?? 'Cancelled by a PreSendEvent listener.';
             $result->add($prepared->message->messageId, SendResult::STATUS_SKIPPED, $reason);
-            $this->dispatchPostSend($prepared, $source, false, new SimpleNotifyException($reason));
+            $this->dispatchPostSend($prepared, $source, SendResult::STATUS_SKIPPED, new SimpleNotifyException($reason));
 
             return false;
         }
@@ -200,7 +200,7 @@ class SimpleNotifyCenter
             );
 
             $result->add($prepared->message->messageId, SendResult::STATUS_FAILED, $e->getMessage());
-            $this->dispatchPostSend($prepared, $source, false, $e);
+            $this->dispatchPostSend($prepared, $source, SendResult::STATUS_FAILED, $e);
 
             return false;
         }
@@ -209,20 +209,22 @@ class SimpleNotifyCenter
         // send log gets the real outcome later, so do not claim more than we know here.
         $accepted = $implementation->isAsynchronous() ? SendResult::STATUS_QUEUED : SendResult::STATUS_SENT;
 
-        $result->add($prepared->message->messageId, $sent ? $accepted : SendResult::STATUS_FAILED);
-        $this->dispatchPostSend($prepared, $source, $sent, $sent ? null : new SimpleNotifyException('The gateway reported the message as not sent.'));
+        $status = $sent ? $accepted : SendResult::STATUS_FAILED;
+
+        $result->add($prepared->message->messageId, $status);
+        $this->dispatchPostSend($prepared, $source, $status, $sent ? null : new SimpleNotifyException('The gateway reported the message as not sent.'));
 
         return $sent;
     }
 
-    private function dispatchPostSend(PreparedMessage $prepared, string $source, bool $successful, \Throwable|null $throwable): void
+    private function dispatchPostSend(PreparedMessage $prepared, string $source, string $status, \Throwable|null $throwable): void
     {
         $this->dispatcher->dispatch(new PostSendEvent(
             $prepared->message,
             $prepared->getGatewayType(),
             $prepared->gateway?->row() ?? [],
             $source,
-            $successful,
+            $status,
             $throwable,
         ));
     }

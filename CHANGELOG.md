@@ -74,6 +74,11 @@ All notable changes to this project are documented here. This project follows
   are now addr-specs (`sn<hash>@simple-notify`) and the `src` references them verbatim, which is
   also what lets Symfony pair the `cid:` reference with its part instead of demoting the image
   to a plain attachment.
+- **A cancelled message was logged as failed rather than skipped.** `PostSendEvent` only
+  carried a boolean, so the send log inferred "failed" whenever a gateway type was present.
+  Because the retry cron re-attempts failed entries, a `PreSendEvent` listener that
+  deliberately cancelled a message (a staging guard, say) had that message re-sent every hour
+  until it exhausted its attempts. The event now carries an explicit `status`.
 - Invalid recipient addresses are skipped and logged instead of aborting the whole message.
 - A message with neither a text nor an HTML part is reported as a configuration error rather
   than handed to the transport.
@@ -88,6 +93,9 @@ All notable changes to this project are documented here. This project follows
   accept a `RenderedMessage` in `send()`. Extending `AbstractGateway` supplies sensible defaults
   for the first three.
 - Callers relying on `send()` returning `array<int, bool>` should use `SendResult::toArray()`.
+- `PostSendEvent::$successful` (bool) is replaced by `$status` (a `SendResult::STATUS_*` value);
+  use `isSuccessful()` for the old meaning, or `wasSkipped()` to tell a deliberate skip from a
+  delivery failure.
 
 ## [1.0.0]
 

@@ -107,9 +107,11 @@ class SendLogListener
         $log->last_attempt = time();
         $log->error = $event->throwable?->getMessage();
 
-        if (!$event->successful) {
-            // A message that never reached a gateway was skipped, not attempted
-            $log->status = '' === $event->gatewayType ? SendResult::STATUS_SKIPPED : SendResult::STATUS_FAILED;
+        if (!$event->isSuccessful()) {
+            // "failed" and "skipped" are taken from the event rather than inferred, because
+            // the retry cron re-attempts failed messages: recording a deliberate skip as a
+            // failure would have it fight the listener that cancelled the message, hourly.
+            $log->status = $event->status;
             $log->save();
 
             return;
@@ -118,7 +120,7 @@ class SendLogListener
         // Only promote from "pending": with a synchronous mail transport the worker has
         // already run and set the definitive status, and this must not overwrite it.
         if (SendResult::STATUS_PENDING === $log->status) {
-            $log->status = SendResult::STATUS_QUEUED;
+            $log->status = $event->status;
         }
 
         $log->save();
