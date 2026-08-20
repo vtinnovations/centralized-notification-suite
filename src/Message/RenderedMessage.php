@@ -42,6 +42,21 @@ class RenderedMessage
     }
 
     /**
+     * Things that went wrong without preventing delivery -- an attachment that could not be
+     * read, an address that was rejected. The message still goes out, but the send log has
+     * to say so: a mail that silently arrives without its attachment is the hardest kind of
+     * problem to diagnose from the outside.
+     *
+     * @var list<string>
+     */
+    public array $warnings = [];
+
+    public function addWarning(string $warning): void
+    {
+        $this->warnings[] = $warning;
+    }
+
+    /**
      * Splits a comma/semicolon/newline separated address field into unique, trimmed values.
      * Gateways that do not deal in e-mail addresses (webhooks) can ignore these.
      *

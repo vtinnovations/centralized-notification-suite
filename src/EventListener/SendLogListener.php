@@ -105,7 +105,7 @@ class SendLogListener
 
         $log->tstamp = time();
         $log->last_attempt = time();
-        $log->error = $event->throwable?->getMessage();
+        $log->error = $this->describe($event);
 
         if (!$event->isSuccessful()) {
             // "failed" and "skipped" are taken from the event rather than inferred, because
@@ -124,5 +124,20 @@ class SendLogListener
         }
 
         $log->save();
+    }
+
+    /**
+     * The error column carries warnings too. A message that went out without the attachment
+     * someone expected is "sent" as far as the transport is concerned, and the log is the
+     * only place that can explain the discrepancy.
+     */
+    private function describe(PostSendEvent $event): string|null
+    {
+        $parts = array_filter([
+            $event->throwable?->getMessage(),
+            ...$event->message->warnings,
+        ]);
+
+        return $parts ? implode(' ', $parts) : null;
     }
 }

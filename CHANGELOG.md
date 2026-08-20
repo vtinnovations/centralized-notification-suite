@@ -79,6 +79,10 @@ All notable changes to this project are documented here. This project follows
   Because the retry cron re-attempts failed entries, a `PreSendEvent` listener that
   deliberately cancelled a message (a staging guard, say) had that message re-sent every hour
   until it exhausted its attempts. The event now carries an explicit `status`.
+- **A dropped attachment was invisible.** An unreadable attachment or an invalid address was
+  written to the application log and nothing else, so the send log showed a clean "sent" for a
+  mail that arrived without the file the recipient was expecting. Both are now recorded on the
+  message as warnings and shown against the log entry, whatever its status.
 - Invalid recipient addresses are skipped and logged instead of aborting the whole message.
 - A message with neither a text nor an HTML part is reported as a configuration error rather
   than handed to the transport.

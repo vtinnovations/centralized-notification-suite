@@ -100,15 +100,15 @@ class EmailGateway implements GatewayInterface
             throw new \RuntimeException(\sprintf('Message ID %d has neither a text nor an HTML body.', $message->messageId));
         }
 
-        $this->addAddresses($email, 'addTo', $message->getRecipientList(), $message->messageId);
-        $this->addAddresses($email, 'addCc', $message->getCcList(), $message->messageId);
-        $this->addAddresses($email, 'addBcc', $message->getBccList(), $message->messageId);
+        $this->addAddresses($email, 'addTo', $message->getRecipientList(), $message);
+        $this->addAddresses($email, 'addCc', $message->getCcList(), $message);
+        $this->addAddresses($email, 'addBcc', $message->getBccList(), $message);
 
         // Per-message reply-to wins over the gateway default
         $replyTo = '' !== $message->replyTo ? $message->replyTo : (string) ($gatewayConfig['reply_to'] ?? '');
 
         if ('' !== $replyTo) {
-            $this->addAddresses($email, 'addReplyTo', RenderedMessage::splitAddressList($replyTo), $message->messageId);
+            $this->addAddresses($email, 'addReplyTo', RenderedMessage::splitAddressList($replyTo), $message);
         }
 
         // Every recipient was invalid or the field rendered empty -- sending would throw
@@ -141,19 +141,16 @@ class EmailGateway implements GatewayInterface
      *
      * @param list<string> $addresses
      */
-    private function addAddresses(Email $email, string $method, array $addresses, int $messageId): void
+    private function addAddresses(Email $email, string $method, array $addresses, RenderedMessage $message): void
     {
         foreach ($addresses as $address) {
             try {
                 $email->$method(Address::create($address));
             } catch (RfcComplianceException $e) {
-                $this->logger->warning(\sprintf(
-                    'Skipping invalid address "%s" (%s) on message ID %d: %s',
-                    $address,
-                    $method,
-                    $messageId,
-                    $e->getMessage(),
-                ));
+                $warning = \sprintf('The address "%s" is not valid and was skipped.', $address);
+
+                $message->addWarning($warning);
+                $this->logger->warning(\sprintf('%s (%s on message ID %d: %s)', $warning, $method, $message->messageId, $e->getMessage()));
             }
         }
     }
@@ -162,11 +159,12 @@ class EmailGateway implements GatewayInterface
     {
         foreach ($message->attachments as $attachment) {
             if (!$attachment->isReadable()) {
-                $this->logger->warning(\sprintf(
-                    'Skipping unreadable attachment "%s" on message ID %d.',
-                    $attachment->path,
-                    $message->messageId,
-                ));
+                // Recorded on the message, not just in the log file: the send log is where
+                // someone looks when a mail arrives without the file they expected.
+                $warning = \sprintf('The attachment "%s" could not be read and was not sent.', $attachment->name);
+
+                $message->addWarning($warning);
+                $this->logger->warning(\sprintf('%s (message ID %d, path "%s")', $warning, $message->messageId, $attachment->path));
 
                 continue;
             }

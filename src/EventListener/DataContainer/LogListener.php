@@ -178,8 +178,9 @@ class LogListener
             StringUtil::specialchars((string) $text),
         );
 
-        // A non-successful row is only actionable with the reason attached
-        if (SendResult::STATUS_SENT !== $status && '' !== (string) ($row['error'] ?? '')) {
+        // Shown on successful rows too: the error column also carries warnings, and a
+        // message that arrived without its attachment looks perfectly fine otherwise.
+        if ('' !== (string) ($row['error'] ?? '')) {
             $args[0] .= \sprintf(
                 ' <span style="color:#999" title="%s">%s</span>',
                 StringUtil::specialchars((string) $row['error']),
