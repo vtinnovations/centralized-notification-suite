@@ -1,0 +1,98 @@
+{
+    "name": "vtinnovations/centralized-notification-suite",
+    "description": "Zentrale Benachrichtigungsverwaltung für Contao 5: Formular-, Mitglieder- und Webhook-Nachrichten mit Tokens, Layouts und Versandprotokoll.",
+    "type": "contao-bundle",
+    "license": "proprietary",
+    "keywords": [
+        "contao",
+        "contao-bundle",
+        "notification",
+        "notification-center",
+        "transactional-email",
+        "email",
+        "webhook",
+        "send-log"
+    ],
+    "authors": [
+        {
+            "name": "V&T Innovations Team",
+            "homepage": "https://www.v-t.one",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/vtinnovations/centralized-notification-suite/issues",
+        "source": "https://github.com/vtinnovations/centralized-notification-suite"
+    },
+    "require": {
+        "php": "^8.1",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-sodium": "*",
+        "contao/core-bundle": "^5.3",
+        "symfony/mailer": "^6.4 || ^7.0",
+        "symfony/mime": "^6.4 || ^7.0",
+        "tijsverkoyen/css-to-inline-styles": "^2.2"
+    },
+    "require-dev": {
+        "contao/manager-plugin": "^2.0",
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "symfony/http-client": "^6.4 || ^7.0"
+    },
+    "suggest": {
+        "symfony/http-client": "Alternative HTTP-Implementierung; der Webhook-Absender nutzt sie, wenn sie installiert ist."
+    },
+    "autoload": {
+        "psr-4": {
+            "VTInnovations\\CentralizedNotificationSuite\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "VTInnovations\\CentralizedNotificationSuite\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "contao-components/installer": true,
+            "contao/manager-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "@php vendor/bin/phpunit",
+        "lint": [
+            "@lint:php"
+        ],
+        "lint:php": "find src contao tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "analyse": "@php vendor/bin/phpstan analyse",
+        "cs": "@php vendor/bin/php-cs-fixer fix --dry-run --diff",
+        "security": [
+            "@composer validate",
+            "@composer audit"
+        ],
+        "release:check": "@php tools/validate-release-keys.php"
+    },
+    "scripts-descriptions": {
+        "test": "Runs the test suite.",
+        "lint": "Checks PHP syntax across the bundle.",
+        "analyse": "Runs static analysis.",
+        "cs": "Reports coding-standard deviations without changing files.",
+        "security": "Validates package metadata and audits dependencies for known advisories.",
+        "release:check": "Fails when the pinned verification material is missing or unusable."
+    },
+    "archive": {
+        "exclude": [
+            "/.github",
+            "/tests",
+            "/tools",
+            "/phpunit.xml.dist",
+            "/.gitignore"
+        ]
+    },
+    "extra": {
+        "contao-manager-plugin": "VTInnovations\\CentralizedNotificationSuite\\ContaoManager\\Plugin"
+    }
+}

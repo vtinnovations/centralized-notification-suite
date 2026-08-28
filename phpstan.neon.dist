@@ -1,0 +1,16 @@
+parameters:
+    level: 6
+    paths:
+        - src
+        - tests
+    tmpDir: .phpstan.cache
+
+    # Contao's DCA and TL_LANG configuration lives in $GLOBALS arrays that cannot be typed,
+    # and its models expose columns through __get(), so property access on them is dynamic
+    # by design rather than by accident.
+    universalObjectCratesClasses:
+        - Contao\Model
+
+    ignoreErrors:
+        - identifier: missingType.iterableValue
+          path: contao/*
