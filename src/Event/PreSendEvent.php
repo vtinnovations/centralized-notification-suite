@@ -1,11 +1,20 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Event;
+namespace VTInnovations\CentralizedNotificationSuite\Event;
 
 use Symfony\Contracts\EventDispatcher\Event;
-use VTInnovations\SimpleNotifyBundle\Message\RenderedMessage;
+use VTInnovations\CentralizedNotificationSuite\Message\RenderedMessage;
 
 /**
  * Dispatched after a message is rendered and before the gateway sends it. Listeners may
@@ -19,7 +28,7 @@ class PreSendEvent extends Event
     private string|null $cancelReason = null;
 
     /**
-     * @param array<string, mixed> $gatewayConfig Raw tl_simple_gateway row
+     * @param array<string, mixed> $gatewayConfig Raw tl_notification_gateway row
      */
     public function __construct(
         public readonly RenderedMessage $message,

@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Model;
+namespace VTInnovations\CentralizedNotificationSuite\Model;
 
 use Contao\Model;
 use Contao\Model\Collection;
@@ -27,14 +36,14 @@ use Contao\Model\Collection;
  */
 class GatewayModel extends Model
 {
-    protected static $strTable = 'tl_simple_gateway';
+    protected static $strTable = 'tl_notification_gateway';
 
     public static function findAllPublished(): Collection|null
     {
         return static::findBy(
-            ['tl_simple_gateway.published=1'],
+            ['tl_notification_gateway.published=1'],
             [],
-            ['order' => 'tl_simple_gateway.title'],
+            ['order' => 'tl_notification_gateway.title'],
         );
     }
 }

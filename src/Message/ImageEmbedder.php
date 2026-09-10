@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Message;
 
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -25,7 +34,7 @@ class ImageEmbedder
      * therefore have to carry this suffix, or the image is demoted to a plain attachment
      * and the <img> renders broken.
      */
-    private const CID_DOMAIN = '@simple-notify';
+    private const CID_DOMAIN = '@notification';
 
     public function __construct(
         private readonly string $projectDir,

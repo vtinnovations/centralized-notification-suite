@@ -1,19 +1,28 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\EventListener;
+namespace VTInnovations\CentralizedNotificationSuite\EventListener;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
-use VTInnovations\SimpleNotifyBundle\Event\PostSendEvent;
-use VTInnovations\SimpleNotifyBundle\Event\PreSendEvent;
-use VTInnovations\SimpleNotifyBundle\Model\LogModel;
-use VTInnovations\SimpleNotifyBundle\SendResult;
+use VTInnovations\CentralizedNotificationSuite\Event\PostSendEvent;
+use VTInnovations\CentralizedNotificationSuite\Event\PreSendEvent;
+use VTInnovations\CentralizedNotificationSuite\Model\LogModel;
+use VTInnovations\CentralizedNotificationSuite\SendResult;
 
 /**
  * Writes the send log. Implemented as an event listener rather than inside
- * SimpleNotifyCenter so that turning logging off removes the behaviour entirely instead of
+ * CentralizedNotificationSuite so that turning logging off removes the behaviour entirely instead of
  * branching around it, and so a project can add its own listener alongside.
  *
  * The row is created *before* the gateway is called and updated afterwards. That ordering

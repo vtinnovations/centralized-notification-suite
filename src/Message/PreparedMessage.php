@@ -1,10 +1,19 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Message;
 
-use VTInnovations\SimpleNotifyBundle\Model\GatewayModel;
+use VTInnovations\CentralizedNotificationSuite\Model\GatewayModel;
 
 /**
  * A rendered message paired with the gateway that should deliver it. $problem is set when

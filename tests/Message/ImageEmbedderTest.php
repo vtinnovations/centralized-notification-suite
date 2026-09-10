@@ -1,14 +1,23 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Tests\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Tests\Message;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Mime\Part\DataPart;
-use VTInnovations\SimpleNotifyBundle\Message\ImageEmbedder;
+use VTInnovations\CentralizedNotificationSuite\Message\ImageEmbedder;
 
 class ImageEmbedderTest extends TestCase
 {

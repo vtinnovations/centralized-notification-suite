@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Command;
+namespace VTInnovations\CentralizedNotificationSuite\Command;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -11,16 +20,16 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use VTInnovations\SimpleNotifyBundle\Model\TemplateModel;
+use VTInnovations\CentralizedNotificationSuite\Model\TemplateModel;
 
 /**
- * Installs the bundled starter layouts as tl_simple_template records.
+ * Installs the bundled starter layouts as tl_notification_template records.
  *
  * A command rather than a migration: writing content into a site's configuration is
  * something an integrator should ask for, not something that happens during an upgrade.
  */
 #[AsCommand(
-    name: 'simple-notify:install-layouts',
+    name: 'notification:install-layouts',
     description: 'Install the bundled starter e-mail layouts',
 )]
 class InstallLayoutsCommand extends Command

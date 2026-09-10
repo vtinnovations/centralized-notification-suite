@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\EventListener\DataContainer;
+namespace VTInnovations\CentralizedNotificationSuite\EventListener\DataContainer;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\CoreBundle\Slug\Slug;
@@ -10,9 +19,9 @@ use Contao\DataContainer;
 use Doctrine\DBAL\Connection;
 
 /**
- * Generates tl_simple_notification.alias from the title when the field is left empty, the
+ * Generates tl_notification.alias from the title when the field is left empty, the
  * same way Contao's own alias fields behave. The alias is what code passes to
- * SimpleNotifyCenter::send(), so it stays editable -- it just no longer has to be typed.
+ * CentralizedNotificationSuite::send(), so it stays editable -- it just no longer has to be typed.
  */
 class AliasListener
 {
@@ -22,7 +31,7 @@ class AliasListener
     ) {
     }
 
-    #[AsCallback(table: 'tl_simple_notification', target: 'fields.alias.save')]
+    #[AsCallback(table: 'tl_notification', target: 'fields.alias.save')]
     public function __invoke(mixed $value, DataContainer $dc): string
     {
         $value = (string) $value;
@@ -60,7 +69,7 @@ class AliasListener
     private function exists(string $alias, int $id): bool
     {
         return (bool) $this->connection->fetchOne(
-            'SELECT id FROM tl_simple_notification WHERE alias = :alias AND id != :id',
+            'SELECT id FROM tl_notification WHERE alias = :alias AND id != :id',
             ['alias' => $alias, 'id' => $id],
         );
     }

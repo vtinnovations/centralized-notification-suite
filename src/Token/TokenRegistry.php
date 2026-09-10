@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Token;
+namespace VTInnovations\CentralizedNotificationSuite\Token;
 
 class TokenRegistry
 {
@@ -34,6 +43,31 @@ class TokenRegistry
         ksort($definitions);
 
         return $definitions;
+    }
+
+    /**
+     * Every token, grouped by the type that offers it.
+     *
+     * The backend help screen runs in its own request (contao_backend_help), which is given
+     * only a table and a field name -- never the record being edited. It therefore cannot
+     * know the notification type and shows all groups, labelled.
+     *
+     * @return array<string, array<string, string>> Type (or TYPE_ANY) => token => description
+     */
+    public function getGroupedDefinitions(): array
+    {
+        $grouped = [];
+
+        foreach ($this->providers as $provider) {
+            $type = $provider->getType();
+            $grouped[$type] = [...$grouped[$type] ?? [], ...$provider->getDefinitions()];
+        }
+
+        foreach ($grouped as &$definitions) {
+            ksort($definitions);
+        }
+
+        return $grouped;
     }
 
     /**

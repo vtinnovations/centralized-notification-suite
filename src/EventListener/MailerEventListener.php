@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\EventListener;
+namespace VTInnovations\CentralizedNotificationSuite\EventListener;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -10,9 +19,9 @@ use Symfony\Component\Mailer\Event\FailedMessageEvent;
 use Symfony\Component\Mailer\Event\SentMessageEvent;
 use Symfony\Component\Mime\Message;
 use Symfony\Component\Mime\RawMessage;
-use VTInnovations\SimpleNotifyBundle\Gateway\EmailGateway;
-use VTInnovations\SimpleNotifyBundle\Model\LogModel;
-use VTInnovations\SimpleNotifyBundle\SendResult;
+use VTInnovations\CentralizedNotificationSuite\Gateway\EmailGateway;
+use VTInnovations\CentralizedNotificationSuite\Model\LogModel;
+use VTInnovations\CentralizedNotificationSuite\SendResult;
 
 /**
  * Records the *real* delivery outcome of an e-mail notification.

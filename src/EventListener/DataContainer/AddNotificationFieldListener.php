@@ -1,12 +1,21 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\EventListener\DataContainer;
+namespace VTInnovations\CentralizedNotificationSuite\EventListener\DataContainer;
 
 use Contao\CoreBundle\DataContainer\PaletteManipulator;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsHook;
-use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
+use VTInnovations\CentralizedNotificationSuite\Model\NotificationModel;
 
 /**
  * Adds a "Notifications" picker to the form generator and to the front-end modules that
@@ -19,7 +28,7 @@ use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
 #[AsHook('loadDataContainer')]
 class AddNotificationFieldListener
 {
-    public const FIELD = 'simple_notify_notifications';
+    public const FIELD = 'notification_ids';
 
     /**
      * Front-end module type => the notification type it can trigger. Determines which
@@ -53,8 +62,8 @@ class AddNotificationFieldListener
         $this->addField('tl_form');
 
         PaletteManipulator::create()
-            ->addLegend('simple_notify_legend', 'store_legend', PaletteManipulator::POSITION_BEFORE, true)
-            ->addField(self::FIELD, 'simple_notify_legend', PaletteManipulator::POSITION_APPEND)
+            ->addLegend('notification_legend', 'store_legend', PaletteManipulator::POSITION_BEFORE, true)
+            ->addField(self::FIELD, 'notification_legend', PaletteManipulator::POSITION_APPEND)
             ->applyToPalette('default', 'tl_form')
         ;
     }
@@ -64,8 +73,8 @@ class AddNotificationFieldListener
         $this->addField('tl_module');
 
         $manipulator = PaletteManipulator::create()
-            ->addLegend('simple_notify_legend', 'template_legend', PaletteManipulator::POSITION_BEFORE, true)
-            ->addField(self::FIELD, 'simple_notify_legend', PaletteManipulator::POSITION_APPEND)
+            ->addLegend('notification_legend', 'template_legend', PaletteManipulator::POSITION_BEFORE, true)
+            ->addField(self::FIELD, 'notification_legend', PaletteManipulator::POSITION_APPEND)
         ;
 
         foreach (array_keys(self::MODULE_TYPES) as $type) {

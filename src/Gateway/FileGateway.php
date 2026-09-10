@@ -1,10 +1,20 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Gateway;
+namespace VTInnovations\CentralizedNotificationSuite\Gateway;
 
-use VTInnovations\SimpleNotifyBundle\Message\RenderedMessage;
+use VTInnovations\CentralizedNotificationSuite\Message\RenderedMessage;
+use VTInnovations\CentralizedNotificationSuite\Runtime\ActivationGate;
 
 /**
  * Writes the message to a file instead of sending it.
@@ -18,8 +28,10 @@ class FileGateway extends AbstractGateway
 {
     public const NAME = 'file';
 
-    public function __construct(private readonly string $defaultDir)
-    {
+    public function __construct(
+        private readonly string $defaultDir,
+        private readonly ActivationGate $activation,
+    ) {
     }
 
     public function getName(): string
@@ -44,8 +56,23 @@ class FileGateway extends AbstractGateway
         return '{file_legend},file_dir';
     }
 
+    /**
+     * The destination is file_dir; the recipient fields are never read.
+     */
+    public function addressesRecipients(): bool
+    {
+        return false;
+    }
+
     public function send(RenderedMessage $message, array $gatewayConfig): bool
     {
+        // A second, independent check. The dispatcher already refuses to run unlicensed,
+        // and this repeats the question at the point where a message would actually leave
+        // the server -- so deleting or bypassing one service does not open every path.
+        if (!$this->activation->current()->granted) {
+            throw new \RuntimeException('This installation is not activated, so nothing was sent.');
+        }
+
         $dir = $this->resolveDir((string) ($gatewayConfig['file_dir'] ?? ''));
 
         if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
@@ -106,7 +133,7 @@ class FileGateway extends AbstractGateway
         }
 
         $lines[] = 'X-Notification: '.$message->alias.' (message '.$message->messageId.')';
-        $lines[] = 'X-Simple-Notify-Ref: '.$message->reference;
+        $lines[] = 'X-Notification-Ref: '.$message->reference;
 
         foreach ($message->attachments as $attachment) {
             $lines[] = \sprintf(

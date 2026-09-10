@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Gateway;
+namespace VTInnovations\CentralizedNotificationSuite\Gateway;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
@@ -10,7 +19,8 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Exception\RfcComplianceException;
 use Symfony\Component\Mime\Part\DataPart;
-use VTInnovations\SimpleNotifyBundle\Message\RenderedMessage;
+use VTInnovations\CentralizedNotificationSuite\Message\RenderedMessage;
+use VTInnovations\CentralizedNotificationSuite\Runtime\ActivationGate;
 
 class EmailGateway implements GatewayInterface
 {
@@ -21,11 +31,12 @@ class EmailGateway implements GatewayInterface
      * real delivery outcome once the Messenger worker has run. It travels with the message,
      * which also makes it a useful handle when tracing a single mail through server logs.
      */
-    public const REFERENCE_HEADER = 'X-Simple-Notify-Ref';
+    public const REFERENCE_HEADER = 'X-Notification-Ref';
 
     public function __construct(
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
+        private readonly ActivationGate $activation,
     ) {
     }
 
@@ -78,8 +89,20 @@ class EmailGateway implements GatewayInterface
         return true;
     }
 
+    public function addressesRecipients(): bool
+    {
+        return true;
+    }
+
     public function send(RenderedMessage $message, array $gatewayConfig): bool
     {
+        // A second, independent check. The dispatcher already refuses to run unlicensed,
+        // and this repeats the question at the point where a message would actually leave
+        // the server -- so deleting or bypassing one service does not open every path.
+        if (!$this->activation->current()->granted) {
+            throw new \RuntimeException('This installation is not activated, so nothing was sent.');
+        }
+
         $email = (new Email())
             ->subject($message->subject)
             ->from(new Address((string) $gatewayConfig['sender_email'], (string) $gatewayConfig['sender_name']))

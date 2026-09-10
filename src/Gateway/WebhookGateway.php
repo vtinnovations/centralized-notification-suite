@@ -1,14 +1,24 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Gateway;
+namespace VTInnovations\CentralizedNotificationSuite\Gateway;
 
 use Contao\StringUtil;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-use VTInnovations\SimpleNotifyBundle\Message\RenderedMessage;
+use VTInnovations\CentralizedNotificationSuite\Message\RenderedMessage;
+use VTInnovations\CentralizedNotificationSuite\Runtime\ActivationGate;
 
 /**
  * Posts a notification to an HTTP endpoint.
@@ -28,8 +38,17 @@ class WebhookGateway extends AbstractGateway
      */
     private const DEFAULT_PAYLOAD = '{"text": "##subject##\n\n##text##"}';
 
-    public function __construct(private readonly HttpClientInterface $httpClient)
-    {
+    /**
+     * $GLOBALS['TL_LANG']['XPL'] key for the payload help wizard. The rows themselves live in
+     * the language files, because they are prose and have to be translatable; the wiring is
+     * in GatewayDcaListener, which is the hook that already runs for this table.
+     */
+    public const PAYLOAD_HELP_KEY = 'centralized_notification_suite_webhook_payload';
+
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+        private readonly ActivationGate $activation,
+    ) {
     }
 
     public function getName(): string
@@ -68,7 +87,11 @@ class WebhookGateway extends AbstractGateway
             'webhook_payload' => [
                 'exclude' => true,
                 'inputType' => 'textarea',
-                'eval' => ['preserveTags' => true, 'decodeEntities' => true, 'class' => 'monospace', 'rte' => 'ace|json', 'tl_class' => 'clr long'],
+                // The help wizard carries ready-to-paste Slack and Teams payloads. Writing
+                // one by hand from the field description alone means guessing at a chat
+                // service's JSON schema, which fails as a 400 the editor cannot read.
+                'explanation' => self::PAYLOAD_HELP_KEY,
+                'eval' => ['preserveTags' => true, 'decodeEntities' => true, 'class' => 'monospace', 'rte' => 'ace|json', 'helpwizard' => true, 'tl_class' => 'clr long'],
                 'sql' => "text NULL",
             ],
         ];
@@ -79,8 +102,25 @@ class WebhookGateway extends AbstractGateway
         return '{webhook_legend},webhook_url,webhook_method,webhook_timeout,webhook_headers,webhook_payload';
     }
 
+    /**
+     * The destination is webhook_url. ##recipients## is still offered to the payload as a
+     * token, but it addresses nothing -- so a Slack or Teams notification must not be forced
+     * to invent an e-mail address to pass validation.
+     */
+    public function addressesRecipients(): bool
+    {
+        return false;
+    }
+
     public function send(RenderedMessage $message, array $gatewayConfig): bool
     {
+        // A second, independent check. The dispatcher already refuses to run unlicensed,
+        // and this repeats the question at the point where a message would actually leave
+        // the server -- so deleting or bypassing one service does not open every path.
+        if (!$this->activation->current()->granted) {
+            throw new \RuntimeException('This installation is not activated, so nothing was sent.');
+        }
+
         $url = trim((string) ($gatewayConfig['webhook_url'] ?? ''));
 
         if ('' === $url) {

@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Model;
+namespace VTInnovations\CentralizedNotificationSuite\Model;
 
 use Contao\Date;
 use Contao\Model;
@@ -17,6 +26,7 @@ use Contao\Model\Collection;
  * @property string $fallback
  * @property string $subject
  * @property string $text
+ * @property string $body_mode
  * @property string $html
  * @property int    $template
  * @property string $auto_plaintext
@@ -35,7 +45,13 @@ use Contao\Model\Collection;
  */
 class MessageModel extends Model
 {
-    protected static $strTable = 'tl_simple_message';
+    /** Body comes from the html field, as it always has. */
+    public const BODY_MODE_HTML = 'html';
+
+    /** Body is composed from the message's blocks. */
+    public const BODY_MODE_BLOCKS = 'blocks';
+
+    protected static $strTable = 'tl_notification_message';
 
     public static function findPublishedByPid(int $pid): Collection|null
     {
@@ -43,13 +59,13 @@ class MessageModel extends Model
 
         return static::findBy(
             [
-                'tl_simple_message.pid=?',
-                'tl_simple_message.published=1',
-                "(tl_simple_message.start='' OR tl_simple_message.start<=$time)",
-                "(tl_simple_message.stop='' OR tl_simple_message.stop>$time)",
+                'tl_notification_message.pid=?',
+                'tl_notification_message.published=1',
+                "(tl_notification_message.start='' OR tl_notification_message.start<=$time)",
+                "(tl_notification_message.stop='' OR tl_notification_message.stop>$time)",
             ],
             [$pid],
-            ['order' => 'tl_simple_message.id'],
+            ['order' => 'tl_notification_message.id'],
         );
     }
 }

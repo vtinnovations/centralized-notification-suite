@@ -1,12 +1,21 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Event;
+namespace VTInnovations\CentralizedNotificationSuite\Event;
 
 use Symfony\Contracts\EventDispatcher\Event;
-use VTInnovations\SimpleNotifyBundle\Message\RenderedMessage;
-use VTInnovations\SimpleNotifyBundle\SendResult;
+use VTInnovations\CentralizedNotificationSuite\Message\RenderedMessage;
+use VTInnovations\CentralizedNotificationSuite\SendResult;
 
 /**
  * Dispatched after the gateway returned or threw. $throwable is null on success; on
@@ -20,7 +29,7 @@ class PostSendEvent extends Event
      *                                            derived from $successful, because "not sent" covers two very
      *                                            different outcomes: a delivery that failed and should be
      *                                            retried, and one that was deliberately skipped and must not be.
-     * @param array<string, mixed> $gatewayConfig Raw tl_simple_gateway row
+     * @param array<string, mixed> $gatewayConfig Raw tl_notification_gateway row
      */
     public function __construct(
         public readonly RenderedMessage $message,

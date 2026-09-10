@@ -1,13 +1,22 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Tests\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Tests\Message;
 
 use PHPUnit\Framework\TestCase;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
-use VTInnovations\SimpleNotifyBundle\Message\EmailLayout;
-use VTInnovations\SimpleNotifyBundle\Message\HtmlRenderer;
+use VTInnovations\CentralizedNotificationSuite\Message\EmailLayout;
+use VTInnovations\CentralizedNotificationSuite\Message\HtmlRenderer;
 
 class HtmlRendererTest extends TestCase
 {

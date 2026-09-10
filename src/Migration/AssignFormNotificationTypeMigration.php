@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Migration;
+namespace VTInnovations\CentralizedNotificationSuite\Migration;
 
 use Contao\CoreBundle\Migration\AbstractMigration;
 use Contao\CoreBundle\Migration\MigrationResult;
@@ -12,7 +21,7 @@ use Doctrine\DBAL\Connection;
 /**
  * Sets type="form" on notifications that a form already triggers.
  *
- * tl_simple_notification.type was introduced after the fact and defaults to "custom", but
+ * tl_notification.type was introduced after the fact and defaults to "custom", but
  * the form generator's notification picker only lists "form" notifications. Without this,
  * upgrading would leave every existing form-triggered notification out of the picker -- and
  * an editor opening that form and saving it would silently detach the notification.
@@ -27,24 +36,24 @@ class AssignFormNotificationTypeMigration extends AbstractMigration
 
     public function getName(): string
     {
-        return 'Simple Notify: mark form-triggered notifications as type "form"';
+        return 'Centralized Notification Suite: mark form-triggered notifications as type "form"';
     }
 
     public function shouldRun(): bool
     {
         $schema = $this->connection->createSchemaManager();
 
-        if (!$schema->tablesExist(['tl_simple_notification', 'tl_form'])) {
+        if (!$schema->tablesExist(['tl_notification', 'tl_form'])) {
             return false;
         }
 
-        $columns = $schema->listTableColumns('tl_simple_notification');
+        $columns = $schema->listTableColumns('tl_notification');
 
         if (!isset($columns['type'])) {
             return false;
         }
 
-        if (!isset($schema->listTableColumns('tl_form')['simple_notify_notifications'])) {
+        if (!isset($schema->listTableColumns('tl_form')['notification_ids'])) {
             return false;
         }
 
@@ -60,7 +69,7 @@ class AssignFormNotificationTypeMigration extends AbstractMigration
         }
 
         $updated = $this->connection->executeStatement(
-            'UPDATE tl_simple_notification SET type = :type WHERE id IN (:ids)',
+            'UPDATE tl_notification SET type = :type WHERE id IN (:ids)',
             ['type' => 'form', 'ids' => $ids],
             ['ids' => \Doctrine\DBAL\ArrayParameterType::INTEGER],
         );
@@ -76,7 +85,7 @@ class AssignFormNotificationTypeMigration extends AbstractMigration
         $referenced = [];
 
         $values = $this->connection->fetchFirstColumn(
-            "SELECT simple_notify_notifications FROM tl_form WHERE simple_notify_notifications IS NOT NULL AND simple_notify_notifications != ''",
+            "SELECT notification_ids FROM tl_form WHERE notification_ids IS NOT NULL AND notification_ids != ''",
         );
 
         foreach ($values as $value) {
@@ -92,7 +101,7 @@ class AssignFormNotificationTypeMigration extends AbstractMigration
         }
 
         return array_map('intval', $this->connection->fetchFirstColumn(
-            'SELECT id FROM tl_simple_notification WHERE id IN (:ids) AND type = :type',
+            'SELECT id FROM tl_notification WHERE id IN (:ids) AND type = :type',
             ['ids' => array_keys($referenced), 'type' => 'custom'],
             ['ids' => \Doctrine\DBAL\ArrayParameterType::INTEGER],
         ));

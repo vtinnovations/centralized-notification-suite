@@ -1,15 +1,24 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\EventListener;
+namespace VTInnovations\CentralizedNotificationSuite\EventListener;
 
 use Contao\StringUtil;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use VTInnovations\SimpleNotifyBundle\Exception\SimpleNotifyException;
-use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
-use VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter;
+use VTInnovations\CentralizedNotificationSuite\Exception\NotificationException;
+use VTInnovations\CentralizedNotificationSuite\Model\NotificationModel;
+use VTInnovations\CentralizedNotificationSuite\CentralizedNotificationSuite;
 
 /**
  * Shared plumbing for the hook listeners: read the notifications configured on a module,
@@ -22,14 +31,14 @@ use VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter;
 class NotificationTrigger
 {
     public function __construct(
-        private readonly SimpleNotifyCenter $notifyCenter,
+        private readonly CentralizedNotificationSuite $notifyCenter,
         private readonly RequestStack $requestStack,
         private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
-     * @param mixed                 $source A module or content element carrying simple_notify_notifications
+     * @param mixed                 $source A module or content element carrying notification_ids
      * @param array<string, string> $tokens
      */
     public function trigger(mixed $source, array $tokens, string $context): void
@@ -49,11 +58,11 @@ class NotificationTrigger
                     $tokens,
                     $language,
                     [],
-                    SimpleNotifyCenter::SOURCE_API,
+                    CentralizedNotificationSuite::SOURCE_API,
                 );
-            } catch (SimpleNotifyException $e) {
+            } catch (NotificationException $e) {
                 $this->logger->error(
-                    \sprintf('Simple Notify (%s): %s', $context, $e->getMessage()),
+                    \sprintf('Centralized Notification Suite (%s): %s', $context, $e->getMessage()),
                     ['exception' => $e],
                 );
             }
@@ -87,11 +96,11 @@ class NotificationTrigger
                     $tokens,
                     $language,
                     [],
-                    SimpleNotifyCenter::SOURCE_API,
+                    CentralizedNotificationSuite::SOURCE_API,
                 );
-            } catch (SimpleNotifyException $e) {
+            } catch (NotificationException $e) {
                 $this->logger->error(
-                    \sprintf('Simple Notify (%s): %s', $context, $e->getMessage()),
+                    \sprintf('Centralized Notification Suite (%s): %s', $context, $e->getMessage()),
                     ['exception' => $e],
                 );
             }

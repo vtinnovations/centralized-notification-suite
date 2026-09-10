@@ -1,13 +1,23 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Message;
 
 use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Contao\CoreBundle\String\SimpleTokenParser;
-use VTInnovations\SimpleNotifyBundle\Model\MessageModel;
-use VTInnovations\SimpleNotifyBundle\Model\TemplateModel;
+use VTInnovations\CentralizedNotificationSuite\Block\BlockBodyRenderer;
+use VTInnovations\CentralizedNotificationSuite\Model\MessageModel;
+use VTInnovations\CentralizedNotificationSuite\Model\TemplateModel;
 
 /**
  * Turns a stored message into a RenderedMessage: ##tokens## first, then {{insert::tags}}.
@@ -30,6 +40,11 @@ class MessageRenderer
      */
     public const RAW_HTML_TOKEN_SUFFIX = '_html';
 
+    /**
+     * tl_notification_template.layout_mode value for a generated design.
+     */
+    public const MODE_DESIGN = 'design';
+
     public function __construct(
         private readonly SimpleTokenParser $tokenParser,
         private readonly InsertTagParser $insertTagParser,
@@ -37,6 +52,9 @@ class MessageRenderer
         private readonly HtmlRenderer $htmlRenderer,
         private readonly PlainTextConverter $plainTextConverter,
         private readonly ImageEmbedder $imageEmbedder,
+        private readonly DesignLibrary $designs,
+        private readonly BrandingProvider $branding,
+        private readonly BlockBodyRenderer $blocks,
     ) {
     }
 
@@ -71,7 +89,7 @@ class MessageRenderer
     }
 
     /**
-     * Body -> tokens -> layout -> inlined CSS -> embedded images.
+     * Blocks -> body -> tokens -> layout -> inlined CSS -> embedded images.
      *
      * @param array<string, string> $tokens
      *
@@ -79,7 +97,7 @@ class MessageRenderer
      */
     private function buildHtml(MessageModel $message, array $tokens): array
     {
-        $body = (string) $message->html;
+        $body = $this->resolveBody($message);
 
         if ('' === trim($body)) {
             return [null, []];
@@ -95,6 +113,23 @@ class MessageRenderer
         }
 
         return $this->imageEmbedder->embed($html);
+    }
+
+    /**
+     * The message body before any token parsing: either the raw HTML field or the markup
+     * composed from the message's blocks.
+     *
+     * Public because TestSendController scans it for ##tokens##, and scanning anything other
+     * than what will actually be rendered is how a token goes silently missing from the
+     * test-send form.
+     */
+    public function resolveBody(MessageModel $message): string
+    {
+        if (MessageModel::BODY_MODE_BLOCKS !== $message->body_mode) {
+            return (string) $message->html;
+        }
+
+        return $this->blocks->renderBody((int) $message->id, $this->branding->get());
     }
 
     /**
@@ -115,9 +150,23 @@ class MessageRenderer
             return null;
         }
 
-        $rendered = [
-            'preheader' => $this->renderText((string) $template->preheader, $tokens),
-        ];
+        $preheader = $this->renderText((string) $template->preheader, $tokens);
+
+        // A design layout is generated from the branding record rather than stored as markup,
+        // so changing the logo or the brand colour updates every design at once.
+        if (self::MODE_DESIGN === $template->layout_mode) {
+            $design = $this->designs->build((string) $template->design, $this->branding->get());
+
+            return new EmailLayout(
+                mode: $design->mode,
+                wrapperHtml: $this->renderTemplatePart($design->wrapperHtml, $tokens),
+                css: $design->css,
+                preheader: $preheader,
+                inlineCss: $design->inlineCss,
+            );
+        }
+
+        $rendered = ['preheader' => $preheader];
 
         foreach (['wrapper_html', 'header_html', 'footer_html'] as $field) {
             $rendered[$field] = $this->renderTemplatePart((string) $template->$field, $tokens);

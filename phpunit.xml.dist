@@ -10,7 +10,7 @@
     beStrictAboutOutputDuringTests="true"
 >
     <testsuites>
-        <testsuite name="Simple Notify">
+        <testsuite name="Centralized Notification Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

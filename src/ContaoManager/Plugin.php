@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\ContaoManager;
+namespace VTInnovations\CentralizedNotificationSuite\ContaoManager;
 
 use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
@@ -12,14 +21,14 @@ use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\RouteCollection;
-use VTInnovations\SimpleNotifyBundle\VTInnovationsSimpleNotifyBundle;
+use VTInnovations\CentralizedNotificationSuite\CentralizedNotificationSuiteBundle;
 
 class Plugin implements BundlePluginInterface, RoutingPluginInterface
 {
     public function getBundles(ParserInterface $parser): array
     {
         return [
-            BundleConfig::create(VTInnovationsSimpleNotifyBundle::class)
+            BundleConfig::create(CentralizedNotificationSuiteBundle::class)
                 ->setLoadAfter([ContaoCoreBundle::class]),
         ];
     }

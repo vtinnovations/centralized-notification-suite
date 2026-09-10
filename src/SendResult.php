@@ -1,11 +1,20 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle;
+namespace VTInnovations\CentralizedNotificationSuite;
 
 /**
- * Outcome of one SimpleNotifyCenter::send() call. Because delivery failures are caught per
+ * Outcome of one CentralizedNotificationSuite::send() call. Because delivery failures are caught per
  * message rather than thrown, this is how a caller finds out what actually happened.
  */
 class SendResult
@@ -31,10 +40,10 @@ class SendResult
     /** Statuses that mean the gateway took responsibility for the message. */
     public const ACCEPTED = [self::STATUS_SENT, self::STATUS_QUEUED];
 
-    /** @var array<int, string> Status keyed by tl_simple_message.id */
+    /** @var array<int, string> Status keyed by tl_notification_message.id */
     private array $statuses = [];
 
-    /** @var array<int, string> Error text keyed by tl_simple_message.id */
+    /** @var array<int, string> Error text keyed by tl_notification_message.id */
     private array $errors = [];
 
     public function add(int $messageId, string $status, string|null $error = null): void

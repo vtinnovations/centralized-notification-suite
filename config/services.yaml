@@ -5,12 +5,14 @@ services:
         public: false
 
     _instanceof:
-        VTInnovations\SimpleNotifyBundle\Gateway\GatewayInterface:
-            tags: ['simple_notify.gateway']
-        VTInnovations\SimpleNotifyBundle\Token\TokenProviderInterface:
-            tags: ['simple_notify.token_provider']
+        VTInnovations\CentralizedNotificationSuite\Gateway\GatewayInterface:
+            tags: ['centralized_notification_suite.gateway']
+        VTInnovations\CentralizedNotificationSuite\Block\BlockInterface:
+            tags: ['centralized_notification_suite.block']
+        VTInnovations\CentralizedNotificationSuite\Token\TokenProviderInterface:
+            tags: ['centralized_notification_suite.token_provider']
 
-    VTInnovations\SimpleNotifyBundle\:
+    VTInnovations\CentralizedNotificationSuite\:
         resource: '../src/'
         exclude:
             - '../src/DependencyInjection/'
@@ -23,86 +25,125 @@ services:
             - '../src/SendResult.php'
             # Registered explicitly below, once per notification type
             - '../src/Token/TriggerTokenProvider.php'
+            # Value objects and exceptions of the activation path
+            - '../src/Distribution/{CanonicalForm,SealedPackage,MalformedDocument,UnverifiedPackage}.php'
+            - '../src/Runtime/{Activation,ActivationRecord,ActivationRefused,ProductProfile,RecordNotApplicable}.php'
+            - '../src/Store/{ExchangeOutcome,StateNotWritable}.php'
+            - '../src/Http/{Reply,ServiceEndpoints,TransportFailed,InboundRejected}.php'
+            # Instantiated by Contao through $GLOBALS['BE_FFL'], not by the container
+            - '../src/Widget/'
 
-    simple_notify.token_provider.member:
-        class: VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider
+    # Reads its own state directory; the path is derived, never taken from a request.
+    VTInnovations\CentralizedNotificationSuite\Store\ActivationStore:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    # Public because the settings widget is constructed by Contao, not by the container, and
+    # has to ask for the current decision itself.
+    VTInnovations\CentralizedNotificationSuite\Runtime\ActivationGate:
+        public: true
+
+    centralized_notification_suite.token_provider.member:
+        class: VTInnovations\CentralizedNotificationSuite\Token\TriggerTokenProvider
         arguments:
             $type: 'member'
-            $definitions: !php/const VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider::MEMBER
-        tags: ['simple_notify.token_provider']
+            $definitions: !php/const VTInnovations\CentralizedNotificationSuite\Token\TriggerTokenProvider::MEMBER
+        tags: ['centralized_notification_suite.token_provider']
 
-    simple_notify.token_provider.comment:
-        class: VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider
+    centralized_notification_suite.token_provider.comment:
+        class: VTInnovations\CentralizedNotificationSuite\Token\TriggerTokenProvider
         arguments:
             $type: 'comment'
-            $definitions: !php/const VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider::COMMENT
-        tags: ['simple_notify.token_provider']
+            $definitions: !php/const VTInnovations\CentralizedNotificationSuite\Token\TriggerTokenProvider::COMMENT
+        tags: ['centralized_notification_suite.token_provider']
 
-    simple_notify.token_provider.newsletter:
-        class: VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider
+    centralized_notification_suite.token_provider.newsletter:
+        class: VTInnovations\CentralizedNotificationSuite\Token\TriggerTokenProvider
         arguments:
             $type: 'newsletter'
-            $definitions: !php/const VTInnovations\SimpleNotifyBundle\Token\TriggerTokenProvider::NEWSLETTER
-        tags: ['simple_notify.token_provider']
+            $definitions: !php/const VTInnovations\CentralizedNotificationSuite\Token\TriggerTokenProvider::NEWSLETTER
+        tags: ['centralized_notification_suite.token_provider']
 
     TijsVerkoyen\CssToInlineStyles\CssToInlineStyles: ~
 
-    VTInnovations\SimpleNotifyBundle\Message\ImageEmbedder:
+    VTInnovations\CentralizedNotificationSuite\Message\ImageEmbedder:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
     # Dumped messages go under var/, which is already outside the web root
-    VTInnovations\SimpleNotifyBundle\Gateway\FileGateway:
+    VTInnovations\CentralizedNotificationSuite\Gateway\FileGateway:
         arguments:
-            $defaultDir: '%kernel.project_dir%/var/simple-notify-mail'
+            $defaultDir: '%kernel.project_dir%/var/notification-mail'
 
-    VTInnovations\SimpleNotifyBundle\Gateway\GatewayRegistry:
+    VTInnovations\CentralizedNotificationSuite\Gateway\GatewayRegistry:
         arguments:
-            $gateways: !tagged_iterator simple_notify.gateway
+            $gateways: !tagged_iterator centralized_notification_suite.gateway
 
-    VTInnovations\SimpleNotifyBundle\Token\TokenRegistry:
+    VTInnovations\CentralizedNotificationSuite\Block\BlockRegistry:
         arguments:
-            $providers: !tagged_iterator simple_notify.token_provider
+            $blocks: !tagged_iterator centralized_notification_suite.block
+
+    VTInnovations\CentralizedNotificationSuite\Token\TokenRegistry:
+        arguments:
+            $providers: !tagged_iterator centralized_notification_suite.token_provider
 
     # Gateways log skipped addresses and unreadable attachments; route that to the same
     # channel Contao uses for its own errors so it shows up in the system log.
-    VTInnovations\SimpleNotifyBundle\Gateway\EmailGateway:
+    VTInnovations\CentralizedNotificationSuite\Gateway\EmailGateway:
         arguments:
             $logger: '@monolog.logger.contao.error'
 
-    VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter:
+    VTInnovations\CentralizedNotificationSuite\CentralizedNotificationSuite:
         public: true
         arguments:
             $logger: '@monolog.logger.contao.error'
 
-    VTInnovations\SimpleNotifyBundle\EventListener\SendLogListener:
+    VTInnovations\CentralizedNotificationSuite\EventListener\SendLogListener:
         arguments:
-            $enabled: '%vt_innovations_simple_notify.log.enabled%'
-            $storeBody: '%vt_innovations_simple_notify.log.store_body%'
+            $enabled: '%centralized_notification_suite.log.enabled%'
+            $storeBody: '%centralized_notification_suite.log.store_body%'
 
-    VTInnovations\SimpleNotifyBundle\EventListener\MailerEventListener:
+    VTInnovations\CentralizedNotificationSuite\EventListener\MailerEventListener:
         arguments:
-            $enabled: '%vt_innovations_simple_notify.log.enabled%'
+            $enabled: '%centralized_notification_suite.log.enabled%'
 
-    VTInnovations\SimpleNotifyBundle\Cron\RetryFailedCron:
-        arguments:
-            $logger: '@monolog.logger.contao.cron'
-            $enabled: '%vt_innovations_simple_notify.log.retry_failed%'
-            $maxAttempts: '%vt_innovations_simple_notify.log.max_attempts%'
-
-    VTInnovations\SimpleNotifyBundle\Cron\PruneLogCron:
+    VTInnovations\CentralizedNotificationSuite\Cron\RetryFailedCron:
         arguments:
             $logger: '@monolog.logger.contao.cron'
-            $retentionDays: '%vt_innovations_simple_notify.log.retention_days%'
+            $enabled: '%centralized_notification_suite.log.retry_failed%'
+            $maxAttempts: '%centralized_notification_suite.log.max_attempts%'
 
-    VTInnovations\SimpleNotifyBundle\EventListener\DataContainer\LogListener:
+    VTInnovations\CentralizedNotificationSuite\Cron\PruneLogCron:
+        arguments:
+            $logger: '@monolog.logger.contao.cron'
+            $retentionDays: '%centralized_notification_suite.log.retention_days%'
+
+    VTInnovations\CentralizedNotificationSuite\EventListener\DataContainer\LogListener:
         arguments:
             $csrfTokenName: '%contao.csrf_token_name%'
 
-    VTInnovations\SimpleNotifyBundle\Controller\TestSendController:
+    VTInnovations\CentralizedNotificationSuite\Controller\TestSendController:
         arguments:
             $csrfTokenName: '%contao.csrf_token_name%'
         tags: ['controller.service_arguments']
 
-    VTInnovations\SimpleNotifyBundle\Controller\MessagePreviewController:
+    VTInnovations\CentralizedNotificationSuite\Controller\MessagePreviewController:
         tags: ['controller.service_arguments']
+
+    VTInnovations\CentralizedNotificationSuite\Dotenv\DotenvWriter:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    VTInnovations\CentralizedNotificationSuite\Cache\CacheClearService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $phpBinary: '%centralized_notification_suite.mailer.php_binary%'
+            $processTimeout: '%centralized_notification_suite.mailer.process_timeout%'
+            $memoryLimit: '%centralized_notification_suite.mailer.memory_limit%'
+            $environment: '%kernel.environment%'
+
+    # public: instantiated by hand in the BE_MOD callback, which Contao creates with `new`
+    VTInnovations\CentralizedNotificationSuite\Mailer\SmtpConfigHandler:
+        public: true
+        arguments:
+            $csrfTokenName: '%contao.csrf_token_name%'

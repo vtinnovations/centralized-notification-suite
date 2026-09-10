@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Model;
+namespace VTInnovations\CentralizedNotificationSuite\Model;
 
 use Contao\Model;
 use Contao\Model\Collection;
@@ -34,14 +43,14 @@ class TemplateModel extends Model
      */
     public const BODY_PLACEHOLDER = '##message_body##';
 
-    protected static $strTable = 'tl_simple_template';
+    protected static $strTable = 'tl_notification_template';
 
     public static function findAllPublished(): Collection|null
     {
         return static::findBy(
-            ['tl_simple_template.published=1'],
+            ['tl_notification_template.published=1'],
             [],
-            ['order' => 'tl_simple_template.title'],
+            ['order' => 'tl_notification_template.title'],
         );
     }
 }

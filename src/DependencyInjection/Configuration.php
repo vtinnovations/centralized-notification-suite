@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\DependencyInjection;
+namespace VTInnovations\CentralizedNotificationSuite\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -11,17 +20,39 @@ class Configuration implements ConfigurationInterface
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('vt_innovations_simple_notify');
+        $treeBuilder = new TreeBuilder('centralized_notification_suite');
 
         $treeBuilder
             ->getRootNode()
             ->children()
+                ->arrayNode('mailer')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('php_binary')
+                            ->defaultValue('')
+                            ->info('Path to the PHP CLI binary used to rebuild the cache after the SMTP settings change. Empty means auto-detect.')
+                        ->end()
+                        ->integerNode('process_timeout')
+                            ->defaultValue(120)
+                            ->min(30)
+                            ->info('Seconds before the cache rebuild subprocess is abandoned.')
+                        ->end()
+                        ->scalarNode('memory_limit')
+                            ->defaultValue('-1')
+                            ->info('memory_limit for the cache rebuild subprocess, e.g. "512M", or "-1" for no limit. An empty string keeps whatever the CLI php.ini sets. Contao warms every installed bundle\'s language files in one process, which routinely needs more than the 128M a stock CLI ini allows.')
+                            ->validate()
+                                ->ifTrue(static fn (mixed $value): bool => '' !== $value && 1 !== preg_match('/^(-1|\d+[KMG]?)$/i', (string) $value))
+                                ->thenInvalid('Expected a PHP memory_limit value such as "512M" or "-1", got %s.')
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
                 ->arrayNode('log')
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->booleanNode('enabled')
                             ->defaultTrue()
-                            ->info('Record every send attempt in tl_simple_log.')
+                            ->info('Record every send attempt in tl_notification_log.')
                         ->end()
                         ->booleanNode('store_body')
                             ->defaultTrue()

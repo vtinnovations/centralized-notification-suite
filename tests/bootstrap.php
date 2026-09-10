@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
 /*
@@ -14,7 +23,15 @@ $candidates = [
 
 foreach ($candidates as $autoload) {
     if (file_exists($autoload)) {
-        require $autoload;
+        $loader = require $autoload;
+
+        // When the bundle is installed as a path repository the host project's autoloader
+        // knows its src/ but not its autoload-dev, so test-only helpers (fixtures, traits)
+        // would not resolve. PHPUnit loads *Test.php files itself, which is why this only
+        // shows up once a test references a shared fixture class.
+        if ($loader instanceof \Composer\Autoload\ClassLoader) {
+            $loader->addPsr4('VTInnovations\\CentralizedNotificationSuite\\Tests\\', __DIR__);
+        }
 
         return;
     }

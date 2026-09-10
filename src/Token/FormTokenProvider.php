@@ -1,10 +1,19 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Token;
+namespace VTInnovations\CentralizedNotificationSuite\Token;
 
-use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
+use VTInnovations\CentralizedNotificationSuite\Model\NotificationModel;
 
 /**
  * Documents the tokens a form submission provides. The values themselves come from the

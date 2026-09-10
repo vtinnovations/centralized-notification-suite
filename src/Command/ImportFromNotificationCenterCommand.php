@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Command;
+namespace VTInnovations\CentralizedNotificationSuite\Command;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Slug\Slug;
@@ -13,10 +22,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use VTInnovations\SimpleNotifyBundle\Model\GatewayModel;
-use VTInnovations\SimpleNotifyBundle\Model\MessageModel;
-use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
-use VTInnovations\SimpleNotifyBundle\Token\NcTokenAliasResolver;
+use VTInnovations\CentralizedNotificationSuite\Model\GatewayModel;
+use VTInnovations\CentralizedNotificationSuite\Model\MessageModel;
+use VTInnovations\CentralizedNotificationSuite\Model\NotificationModel;
+use VTInnovations\CentralizedNotificationSuite\Token\NcTokenAliasResolver;
 
 /**
  * Imports notifications, messages and gateways from terminal42/notification_center.
@@ -33,7 +42,7 @@ use VTInnovations\SimpleNotifyBundle\Token\NcTokenAliasResolver;
  * than to fail on a column that a given install happens not to have.
  */
 #[AsCommand(
-    name: 'simple-notify:import-nc',
+    name: 'notification:import-nc',
     description: 'Import notifications, messages and gateways from Notification Center',
 )]
 class ImportFromNotificationCenterCommand extends Command
@@ -222,7 +231,7 @@ class ImportFromNotificationCenterCommand extends Command
                 // instead of doubling the message list on every run.
                 if ($existing) {
                     $this->connection->executeStatement(
-                        'DELETE FROM tl_simple_message WHERE pid = :pid',
+                        'DELETE FROM tl_notification_message WHERE pid = :pid',
                         ['pid' => $notificationId],
                     );
                 }
@@ -354,7 +363,7 @@ class ImportFromNotificationCenterCommand extends Command
     private function aliasExists(string $alias): bool
     {
         return (bool) $this->connection->fetchOne(
-            'SELECT id FROM tl_simple_notification WHERE alias = :alias',
+            'SELECT id FROM tl_notification WHERE alias = :alias',
             ['alias' => $alias],
         );
     }

@@ -1,14 +1,23 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Token;
+namespace VTInnovations\CentralizedNotificationSuite\Token;
 
 /**
  * Declares which ##tokens## a kind of notification offers, so the backend can show an
  * accurate list instead of leaving editors to guess names and find out by sending.
  *
- * Providers are collected automatically via the "simple_notify.token_provider" tag.
+ * Providers are collected automatically via the "centralized_notification_suite.token_provider" tag.
  */
 interface TokenProviderInterface
 {
@@ -18,7 +27,7 @@ interface TokenProviderInterface
     public const TYPE_ANY = '*';
 
     /**
-     * A tl_simple_notification.type value, or TYPE_ANY.
+     * A tl_notification.type value, or TYPE_ANY.
      */
     public function getType(): string;
 

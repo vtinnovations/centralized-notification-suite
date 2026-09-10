@@ -1,12 +1,21 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Tests\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Tests\Message;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use VTInnovations\SimpleNotifyBundle\Message\PlainTextConverter;
+use VTInnovations\CentralizedNotificationSuite\Message\PlainTextConverter;
 
 class PlainTextConverterTest extends TestCase
 {

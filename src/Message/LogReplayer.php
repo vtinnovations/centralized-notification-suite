@@ -1,12 +1,21 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Message;
 
-use VTInnovations\SimpleNotifyBundle\Model\GatewayModel;
-use VTInnovations\SimpleNotifyBundle\Model\LogModel;
-use VTInnovations\SimpleNotifyBundle\Model\MessageModel;
+use VTInnovations\CentralizedNotificationSuite\Model\GatewayModel;
+use VTInnovations\CentralizedNotificationSuite\Model\LogModel;
+use VTInnovations\CentralizedNotificationSuite\Model\MessageModel;
 
 /**
  * Rebuilds a sendable message from a send-log row.

@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Cron;
+namespace VTInnovations\CentralizedNotificationSuite\Cron;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
 use Doctrine\DBAL\Connection;
@@ -32,7 +41,7 @@ class PruneLogCron
         $deleted = $this->prune($this->retentionDays);
 
         if ($deleted > 0) {
-            $this->logger->info(\sprintf('Simple Notify: pruned %d send-log entr%s.', $deleted, 1 === $deleted ? 'y' : 'ies'));
+            $this->logger->info(\sprintf('Centralized Notification Suite: pruned %d send-log entr%s.', $deleted, 1 === $deleted ? 'y' : 'ies'));
         }
     }
 
@@ -44,7 +53,7 @@ class PruneLogCron
         $threshold = time() - ($retentionDays * 86400);
 
         return (int) $this->connection->executeStatement(
-            'DELETE FROM tl_simple_log WHERE tstamp < :threshold',
+            'DELETE FROM tl_notification_log WHERE tstamp < :threshold',
             ['threshold' => $threshold],
         );
     }

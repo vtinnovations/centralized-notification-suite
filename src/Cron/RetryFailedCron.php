@@ -1,15 +1,25 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Cron;
+namespace VTInnovations\CentralizedNotificationSuite\Cron;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Psr\Log\LoggerInterface;
-use VTInnovations\SimpleNotifyBundle\Message\LogReplayer;
-use VTInnovations\SimpleNotifyBundle\Model\LogModel;
-use VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter;
+use VTInnovations\CentralizedNotificationSuite\Message\LogReplayer;
+use VTInnovations\CentralizedNotificationSuite\Model\LogModel;
+use VTInnovations\CentralizedNotificationSuite\Runtime\ActivationGate;
+use VTInnovations\CentralizedNotificationSuite\CentralizedNotificationSuite;
 
 /**
  * Re-attempts messages that failed to send. The common case this exists for is a mail
@@ -21,17 +31,25 @@ class RetryFailedCron
 {
     public function __construct(
         private readonly ContaoFramework $framework,
-        private readonly SimpleNotifyCenter $notifyCenter,
+        private readonly CentralizedNotificationSuite $notifyCenter,
         private readonly LogReplayer $replayer,
         private readonly LoggerInterface $logger,
         private readonly bool $enabled,
         private readonly int $maxAttempts,
+        private readonly ActivationGate $activation,
     ) {
     }
 
     public function __invoke(): void
     {
         if (!$this->enabled) {
+            return;
+        }
+
+        // Background work is gated too. A scheduled job runs with no administrator watching
+        // and no browser session, so an unlicensed installation must not quietly keep
+        // delivering through it.
+        if (!$this->activation->current()->granted) {
             return;
         }
 
@@ -61,14 +79,14 @@ class RetryFailedCron
 
             ++$retried;
 
-            if ($this->notifyCenter->deliver($prepared, SimpleNotifyCenter::SOURCE_CRON)) {
+            if ($this->notifyCenter->deliver($prepared, CentralizedNotificationSuite::SOURCE_CRON)) {
                 ++$recovered;
             }
         }
 
         if ($retried > 0) {
             $this->logger->info(\sprintf(
-                'Simple Notify retry: re-attempted %d failed message(s), %d succeeded.',
+                'Centralized Notification Suite retry: re-attempted %d failed message(s), %d succeeded.',
                 $retried,
                 $recovered,
             ));

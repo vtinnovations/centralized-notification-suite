@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\EventListener\DataContainer;
+namespace VTInnovations\CentralizedNotificationSuite\EventListener\DataContainer;
 
 use Contao\Backend;
 use Contao\Config;
@@ -17,11 +26,11 @@ use Contao\Message;
 use Contao\StringUtil;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Csrf\CsrfToken;
-use VTInnovations\SimpleNotifyBundle\Cron\PruneLogCron;
-use VTInnovations\SimpleNotifyBundle\Message\LogReplayer;
-use VTInnovations\SimpleNotifyBundle\Model\LogModel;
-use VTInnovations\SimpleNotifyBundle\SendResult;
-use VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter;
+use VTInnovations\CentralizedNotificationSuite\Cron\PruneLogCron;
+use VTInnovations\CentralizedNotificationSuite\Message\LogReplayer;
+use VTInnovations\CentralizedNotificationSuite\Model\LogModel;
+use VTInnovations\CentralizedNotificationSuite\SendResult;
+use VTInnovations\CentralizedNotificationSuite\CentralizedNotificationSuite;
 
 /**
  * Backend behaviour for the send log: the resend and prune actions, and the coloured
@@ -33,7 +42,7 @@ class LogListener
     private const ACTIONS = ['resend', 'clear'];
 
     public function __construct(
-        private readonly SimpleNotifyCenter $notifyCenter,
+        private readonly CentralizedNotificationSuite $notifyCenter,
         private readonly LogReplayer $replayer,
         private readonly PruneLogCron $pruneCron,
         private readonly ContaoCsrfTokenManager $tokenManager,
@@ -42,7 +51,7 @@ class LogListener
     ) {
     }
 
-    #[AsCallback(table: 'tl_simple_log', target: 'config.onload')]
+    #[AsCallback(table: 'tl_notification_log', target: 'config.onload')]
     public function handleActions(DataContainer|null $dc = null): void
     {
         $request = $this->requestStack->getCurrentRequest();
@@ -60,7 +69,7 @@ class LogListener
         // These change state from a GET link, so the request token has to be validated
         // explicitly -- Contao only does that automatically for POST requests.
         if (!$this->tokenManager->isTokenValid(new CsrfToken($this->csrfTokenName, (string) $request->query->get('rt')))) {
-            throw new AccessDeniedException('Invalid request token for a Simple Notify log action.');
+            throw new AccessDeniedException('Invalid request token for a Centralized Notification Suite log action.');
         }
 
         if ('clear' === $key) {
@@ -88,7 +97,7 @@ class LogListener
             return;
         }
 
-        if ($this->notifyCenter->deliver($prepared, SimpleNotifyCenter::SOURCE_RESEND)) {
+        if ($this->notifyCenter->deliver($prepared, CentralizedNotificationSuite::SOURCE_RESEND)) {
             Message::addConfirmation($this->trans('resendOk', [$prepared->message->recipients]));
 
             return;
@@ -113,7 +122,7 @@ class LogListener
      *
      * @param array<string, mixed> $row
      */
-    #[AsCallback(table: 'tl_simple_log', target: 'list.operations.resend.button')]
+    #[AsCallback(table: 'tl_notification_log', target: 'list.operations.resend.button')]
     public function resendButton(array $row, string|null $href, string $label, string $title, string|null $icon, string $attributes): string
     {
         $entry = LogModel::findByPk($row['id']);
@@ -139,7 +148,7 @@ class LogListener
      * The global "clear" link needs the request token appended, which a static DCA href
      * cannot carry.
      */
-    #[AsCallback(table: 'tl_simple_log', target: 'list.global_operations.clear.button')]
+    #[AsCallback(table: 'tl_notification_log', target: 'list.global_operations.clear.button')]
     public function clearButton(string|null $href, string $label, string $title, string $class, string $attributes): string
     {
         return \sprintf(
@@ -153,13 +162,20 @@ class LogListener
     }
 
     /**
+     * The columns of one log row.
+     *
+     * This table is MODE_SORTED with showColumns, so every core passes all four arguments and
+     * expects the column array back. The trailing parameters are optional anyway, because the
+     * cores disagree on how many they pass to a label callback and a missing one is a fatal
+     * that takes down the whole module -- see MessageListener::formatLabel().
+     *
      * @param array<string, mixed> $row
      * @param array<int, string>   $args
      *
      * @return array<int, string>
      */
-    #[AsCallback(table: 'tl_simple_log', target: 'list.label.label')]
-    public function formatLabel(array $row, string $label, DataContainer $dc, array $args): array
+    #[AsCallback(table: 'tl_notification_log', target: 'list.label.label')]
+    public function formatLabel(array $row, string $label, DataContainer|null $dc = null, array $args = []): array
     {
         $colours = [
             SendResult::STATUS_SENT => '#4caf50',
@@ -170,7 +186,7 @@ class LogListener
         ];
 
         $status = (string) $row['status'];
-        $text = $GLOBALS['TL_LANG']['tl_simple_log']['status_options'][$status] ?? $status;
+        $text = $GLOBALS['TL_LANG']['tl_notification_log']['status_options'][$status] ?? $status;
 
         $args[0] = \sprintf(
             '<span style="display:inline-block;padding:1px 8px;border-radius:9px;color:#fff;font-size:.85em;white-space:nowrap;background:%s">%s</span>',
@@ -198,7 +214,7 @@ class LogListener
      */
     private function trans(string $key, array $params = []): string
     {
-        $pattern = $GLOBALS['TL_LANG']['tl_simple_log'][$key] ?? $key;
+        $pattern = $GLOBALS['TL_LANG']['tl_notification_log'][$key] ?? $key;
 
         return $params ? \vsprintf((string) $pattern, $params) : (string) $pattern;
     }

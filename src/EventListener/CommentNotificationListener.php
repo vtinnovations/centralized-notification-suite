@@ -1,11 +1,20 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\EventListener;
+namespace VTInnovations\CentralizedNotificationSuite\EventListener;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsHook;
-use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
+use VTInnovations\CentralizedNotificationSuite\Model\NotificationModel;
 
 /**
  * Sends a notification when a comment is posted. The case that matters is moderation: a

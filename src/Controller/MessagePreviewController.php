@@ -1,18 +1,28 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Controller;
+namespace VTInnovations\CentralizedNotificationSuite\Controller;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Security\ContaoCorePermissions;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use VTInnovations\SimpleNotifyBundle\Message\MessageRenderer;
-use VTInnovations\SimpleNotifyBundle\Model\MessageModel;
-use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
-use VTInnovations\SimpleNotifyBundle\Token\TokenRegistry;
+use VTInnovations\CentralizedNotificationSuite\Message\Attachment;
+use VTInnovations\CentralizedNotificationSuite\Message\MessageRenderer;
+use VTInnovations\CentralizedNotificationSuite\Model\MessageModel;
+use VTInnovations\CentralizedNotificationSuite\Model\NotificationModel;
+use VTInnovations\CentralizedNotificationSuite\Token\TokenRegistry;
 
 /**
  * Renders a message the way a recipient would receive it -- through the full pipeline,
@@ -32,15 +42,15 @@ class MessagePreviewController extends AbstractController
     }
 
     #[Route(
-        path: '/contao/simple-notify/preview/{id}',
-        name: 'simple_notify_preview',
+        path: '/contao/notification/preview/{id}',
+        name: 'centralized_notification_suite_preview',
         requirements: ['id' => '\d+'],
         defaults: ['_scope' => 'backend', '_token_check' => false],
         methods: ['GET'],
     )]
     public function __invoke(int $id): Response
     {
-        $this->denyAccessUnlessGranted(ContaoCorePermissions::USER_CAN_ACCESS_MODULE, 'simple_notify');
+        $this->denyAccessUnlessGranted(ContaoCorePermissions::USER_CAN_ACCESS_MODULE, 'notification');
         $this->framework->initialize();
 
         $message = MessageModel::findByPk($id);
@@ -60,7 +70,48 @@ class MessagePreviewController extends AbstractController
 
         // The message body is shown inside a sandboxed iframe, so a stray <script> in a
         // pasted design cannot run against the backend session.
-        return new Response($this->page($rendered->subject, $rendered->html, $rendered->text));
+        return new Response($this->page(
+            $rendered->subject,
+            $this->inlineCidImages($rendered->html, $rendered->attachments),
+            $rendered->text,
+        ));
+    }
+
+    /**
+     * Swaps cid: references for data: URIs.
+     *
+     * "Embed images" turns a logo into an inline attachment referenced as <img src="cid:...">,
+     * which is exactly right in a mail client and meaningless in a browser -- so without this
+     * the preview shows a broken image for a message that arrives perfectly. Embedding the
+     * bytes keeps the preview faithful and works whether or not the file is web-accessible.
+     *
+     * @param list<Attachment> $attachments
+     */
+    private function inlineCidImages(string|null $html, array $attachments): string|null
+    {
+        if (null === $html || !str_contains($html, 'cid:')) {
+            return $html;
+        }
+
+        $replacements = [];
+
+        foreach ($attachments as $attachment) {
+            if (!$attachment->isInline() || !$attachment->isReadable()) {
+                continue;
+            }
+
+            if (false === ($contents = $attachment->getContents())) {
+                continue;
+            }
+
+            $replacements['cid:'.$attachment->cid] = \sprintf(
+                'data:%s;base64,%s',
+                $attachment->type ?: 'application/octet-stream',
+                base64_encode($contents),
+            );
+        }
+
+        return $replacements ? str_replace(array_keys($replacements), array_values($replacements), $html) : $html;
     }
 
     /**
@@ -106,7 +157,7 @@ class MessagePreviewController extends AbstractController
      */
     private function page(string $subject, string|null $html, string $text): string
     {
-        $lang = $GLOBALS['TL_LANG']['tl_simple_message'] ?? [];
+        $lang = $GLOBALS['TL_LANG']['tl_notification_message'] ?? [];
         $labels = [
             'subject' => $lang['previewSubject'] ?? 'Subject',
             'desktop' => $lang['previewDesktop'] ?? 'Desktop',

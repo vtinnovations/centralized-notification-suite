@@ -1,78 +1,123 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\EventListener\DataContainer;
+namespace VTInnovations\CentralizedNotificationSuite\EventListener\DataContainer;
 
-use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
-use Contao\DataContainer;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsHook;
 use Contao\System;
-use Symfony\Component\HttpFoundation\RequestStack;
-use VTInnovations\SimpleNotifyBundle\Model\MessageModel;
-use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
-use VTInnovations\SimpleNotifyBundle\Token\TokenRegistry;
+use VTInnovations\CentralizedNotificationSuite\Model\NotificationModel;
+use VTInnovations\CentralizedNotificationSuite\Token\TokenProviderInterface;
+use VTInnovations\CentralizedNotificationSuite\Token\TokenRegistry;
 
 /**
- * Fills the help wizard on the message body fields with the tokens actually available to
- * this notification, taken from its type.
+ * Fills the help wizard on the message body fields with the available ##tokens##, so an
+ * editor can look up a token name instead of guessing it and finding out by sending.
  *
- * Contao renders TL_LANG['XPL'][<key>] as a two-column table when it is an array, so the
- * reference is built here rather than written into a language file: the list depends on the
- * record being edited and on which token providers are installed.
+ * Runs on loadDataContainer rather than as an onload callback: the wizard is rendered by a
+ * separate request (contao_backend_help), which loads the DCA but never builds a
+ * DataContainer, so an onload callback would leave the popup empty.
  */
+#[AsHook('loadDataContainer')]
 class TokenHelpListener
 {
-    private const XPL_KEY = 'simple_notify_tokens';
+    private const XPL_KEY = 'centralized_notification_suite_tokens';
 
-    public function __construct(
-        private readonly TokenRegistry $registry,
-        private readonly RequestStack $requestStack,
-    ) {
+    /**
+     * The fields whose content is token-parsed.
+     */
+    /**
+     * Token-carrying fields, per table.
+     */
+    private const FIELDS = [
+        'tl_notification_message' => ['subject', 'text', 'html'],
+        'tl_notification_block' => ['heading', 'body_text', 'link_text', 'link_url', 'details_rows', 'custom_html'],
+    ];
+
+    public function __construct(private readonly TokenRegistry $registry)
+    {
     }
 
-    #[AsCallback(table: 'tl_simple_message', target: 'config.onload')]
-    public function __invoke(DataContainer|null $dc = null): void
+    public function __invoke(string $table): void
     {
-        $type = $this->resolveNotificationType($dc);
-
-        System::loadLanguageFile('explain');
-
-        $rows = [[
-            $GLOBALS['TL_LANG']['tl_simple_message']['tokenHelpHeader'][0] ?? 'Token',
-            $GLOBALS['TL_LANG']['tl_simple_message']['tokenHelpHeader'][1] ?? 'Contains',
-        ]];
-
-        foreach ($this->registry->getDefinitionsFor($type) as $token => $description) {
-            // Angle brackets mark a family of tokens whose real names come from the data
-            // (##<field name>##); they still show the shape an editor has to type.
-            $rows[] = ['##'.$token.'##', $description];
+        if (!isset(self::FIELDS[$table])) {
+            return;
         }
 
-        $GLOBALS['TL_LANG']['XPL'][self::XPL_KEY] = $rows;
+        // The type labels double as the group headings below
+        System::loadLanguageFile('tl_notification');
 
-        foreach (['text', 'html', 'subject'] as $field) {
-            $GLOBALS['TL_DCA']['tl_simple_message']['fields'][$field]['explanation'] = self::XPL_KEY;
+        $GLOBALS['TL_LANG']['XPL'][self::XPL_KEY] = $this->buildRows();
+
+        foreach (self::FIELDS[$table] as $field) {
+            // A block-contributed field only exists once its type is registered, so this has
+            // to run after BlockDcaListener -- which is why that listener sits at priority 10.
+            if (isset($GLOBALS['TL_DCA'][$table]['fields'][$field])) {
+                $GLOBALS['TL_DCA'][$table]['fields'][$field]['explanation'] = self::XPL_KEY;
+                $GLOBALS['TL_DCA'][$table]['fields'][$field]['eval']['helpwizard'] = true;
+            }
         }
     }
 
     /**
-     * The message list is always opened from its notification, so the type comes from the
-     * parent record -- either the current one or, when editing a single message, its pid.
+     * Contao's be_help template prints each cell unescaped and renders a row as a full-width
+     * heading when its first value is "headspan".
+     *
+     * @return list<array{0: string, 1: string}>
      */
-    private function resolveNotificationType(DataContainer|null $dc): string
+    private function buildRows(): array
     {
-        $request = $this->requestStack->getCurrentRequest();
-        $pid = (int) ($request?->query->get('id') ?? 0);
+        $grouped = $this->registry->getGroupedDefinitions();
+        $typeLabels = $GLOBALS['TL_LANG']['tl_notification']['type_options'] ?? [];
 
-        // act=edit means the id is the message, not the notification
-        if ($request && \in_array($request->query->get('act'), ['edit', 'show'], true)) {
-            $pid = (int) (MessageModel::findByPk($pid)?->pid ?? 0);
+        $rows = [$GLOBALS['TL_LANG']['tl_notification_message']['tokenHelpHeader'] ?? ['Token', 'Contains']];
+
+        // Universal tokens go last: the editor came looking for the ones their trigger adds
+        $universal = $grouped[TokenProviderInterface::TYPE_ANY] ?? [];
+        unset($grouped[TokenProviderInterface::TYPE_ANY]);
+
+        foreach (NotificationModel::TYPES as $type) {
+            if ($definitions = $grouped[$type] ?? []) {
+                $rows = [...$rows, ...$this->group((string) ($typeLabels[$type] ?? $type), $definitions)];
+            }
         }
 
-        if (0 === $pid && null !== $dc) {
-            $pid = (int) ($dc->activeRecord->pid ?? 0);
+        if ($universal) {
+            $label = $GLOBALS['TL_LANG']['tl_notification_message']['tokenHelpAny'] ?? 'Available to every notification';
+            $rows = [...$rows, ...$this->group($label, $universal)];
         }
 
-        return (string) (NotificationModel::findByPk($pid)?->type ?: NotificationModel::TYPE_CUSTOM);
+        return $rows;
+    }
+
+    /**
+     * @param array<string, string> $definitions
+     *
+     * @return list<array{0: string, 1: string}>
+     */
+    private function group(string $heading, array $definitions): array
+    {
+        $rows = [['headspan', $this->escape($heading)]];
+
+        foreach ($definitions as $token => $description) {
+            // Token names such as "<field name>" would be swallowed as markup unescaped
+            $rows[] = ['<code>##'.$this->escape((string) $token).'##</code>', $this->escape($description)];
+        }
+
+        return $rows;
+    }
+
+    private function escape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 }

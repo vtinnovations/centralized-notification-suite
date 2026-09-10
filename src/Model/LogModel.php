@@ -1,12 +1,21 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Model;
+namespace VTInnovations\CentralizedNotificationSuite\Model;
 
 use Contao\Model;
 use Contao\Model\Collection;
-use VTInnovations\SimpleNotifyBundle\SendResult;
+use VTInnovations\CentralizedNotificationSuite\SendResult;
 
 /**
  * One row per send attempt. This is what makes "did the customer actually get the enquiry
@@ -14,11 +23,11 @@ use VTInnovations\SimpleNotifyBundle\SendResult;
  *
  * @property int         $id
  * @property int         $tstamp
- * @property int         $pid          tl_simple_notification.id
- * @property int         $message      tl_simple_message.id
+ * @property int         $pid          tl_notification.id
+ * @property int         $message      tl_notification_message.id
  * @property string      $reference
  * @property string      $alias
- * @property int         $gateway      tl_simple_gateway.id
+ * @property int         $gateway      tl_notification_gateway.id
  * @property string      $gateway_type
  * @property string      $recipients
  * @property string      $subject
@@ -36,7 +45,7 @@ use VTInnovations\SimpleNotifyBundle\SendResult;
  */
 class LogModel extends Model
 {
-    protected static $strTable = 'tl_simple_log';
+    protected static $strTable = 'tl_notification_log';
 
     public static function findByReference(string $reference): self|null
     {
@@ -54,12 +63,12 @@ class LogModel extends Model
     {
         return static::findBy(
             [
-                'tl_simple_log.status=?',
-                'tl_simple_log.attempts<?',
-                "(tl_simple_log.body_text != '' OR tl_simple_log.body_html != '')",
+                'tl_notification_log.status=?',
+                'tl_notification_log.attempts<?',
+                "(tl_notification_log.body_text != '' OR tl_notification_log.body_html != '')",
             ],
             [SendResult::STATUS_FAILED, $maxAttempts],
-            ['order' => 'tl_simple_log.tstamp ASC', 'limit' => $limit],
+            ['order' => 'tl_notification_log.tstamp ASC', 'limit' => $limit],
         );
     }
 
@@ -74,9 +83,9 @@ class LogModel extends Model
     public static function findLatestForNotification(int $pid): self|null
     {
         return static::findOneBy(
-            ['tl_simple_log.pid=?'],
+            ['tl_notification_log.pid=?'],
             [$pid],
-            ['order' => 'tl_simple_log.tstamp DESC'],
+            ['order' => 'tl_notification_log.tstamp DESC'],
         );
     }
 }

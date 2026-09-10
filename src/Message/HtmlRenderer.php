@@ -1,11 +1,20 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Message;
 
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
-use VTInnovations\SimpleNotifyBundle\Model\TemplateModel;
+use VTInnovations\CentralizedNotificationSuite\Model\TemplateModel;
 
 // TemplateModel is referenced only for its BODY_PLACEHOLDER constant; the layout itself
 // arrives as an EmailLayout value object so this class needs no database.

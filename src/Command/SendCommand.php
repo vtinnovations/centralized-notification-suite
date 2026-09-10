@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Command;
+namespace VTInnovations\CentralizedNotificationSuite\Command;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -12,9 +21,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use VTInnovations\SimpleNotifyBundle\Exception\SimpleNotifyException;
-use VTInnovations\SimpleNotifyBundle\SendResult;
-use VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter;
+use VTInnovations\CentralizedNotificationSuite\Exception\NotificationException;
+use VTInnovations\CentralizedNotificationSuite\SendResult;
+use VTInnovations\CentralizedNotificationSuite\CentralizedNotificationSuite;
+use VTInnovations\CentralizedNotificationSuite\Runtime\ActivationGate;
 
 /**
  * Triggers a notification from the command line.
@@ -23,14 +33,15 @@ use VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter;
  * server without a browser session -- including which messages a given language resolves to.
  */
 #[AsCommand(
-    name: 'simple-notify:send',
+    name: 'notification:send',
     description: 'Trigger a notification by alias',
 )]
 class SendCommand extends Command
 {
     public function __construct(
         private readonly ContaoFramework $framework,
-        private readonly SimpleNotifyCenter $notifyCenter,
+        private readonly CentralizedNotificationSuite $notifyCenter,
+        private readonly ActivationGate $activation,
     ) {
         parent::__construct();
     }
@@ -80,8 +91,8 @@ class SendCommand extends Command
                 return $this->dryRun($io, $alias, $tokens, $language);
             }
 
-            $result = $this->notifyCenter->send($alias, $tokens, $language, [], SimpleNotifyCenter::SOURCE_CRON);
-        } catch (SimpleNotifyException $e) {
+            $result = $this->notifyCenter->send($alias, $tokens, $language, [], CentralizedNotificationSuite::SOURCE_CRON);
+        } catch (NotificationException $e) {
             $io->error($e->getMessage());
 
             return Command::FAILURE;
@@ -127,6 +138,15 @@ class SendCommand extends Command
         $statuses = $result->getStatuses();
 
         if (!$statuses) {
+            // An unlicensed installation produces the same empty result as a misconfigured
+            // notification, and telling an operator to check their fallback message when the
+            // real problem is activation would send them looking in the wrong place.
+            if (!$this->activation->current()->granted) {
+                $io->warning('Nothing was sent: this installation is not activated. Enter a licence key under Contao > Settings.');
+
+                return Command::SUCCESS;
+            }
+
             $io->warning('The notification resolved to no messages. Check that it has a published message for this language, or one flagged as fallback.');
 
             return Command::SUCCESS;

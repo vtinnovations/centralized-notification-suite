@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Model;
+namespace VTInnovations\CentralizedNotificationSuite\Model;
 
 use Contao\Model;
 use Contao\Model\Collection;
@@ -33,7 +42,7 @@ class NotificationModel extends Model
 
     public const TYPE_NEWSLETTER = 'newsletter';
 
-    /** Triggered from project code via SimpleNotifyCenter::send(). */
+    /** Triggered from project code via CentralizedNotificationSuite::send(). */
     public const TYPE_CUSTOM = 'custom';
 
     public const TYPES = [
@@ -44,14 +53,14 @@ class NotificationModel extends Model
         self::TYPE_CUSTOM,
     ];
 
-    protected static $strTable = 'tl_simple_notification';
+    protected static $strTable = 'tl_notification';
 
     public static function findByType(string $type): Collection|null
     {
         return static::findBy(
-            ['tl_simple_notification.type=?'],
+            ['tl_notification.type=?'],
             [$type],
-            ['order' => 'tl_simple_notification.title'],
+            ['order' => 'tl_notification.title'],
         );
     }
 

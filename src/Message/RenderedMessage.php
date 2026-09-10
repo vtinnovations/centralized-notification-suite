@@ -1,11 +1,20 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Message;
+namespace VTInnovations\CentralizedNotificationSuite\Message;
 
 /**
- * A tl_simple_message with every token and insert tag already resolved -- what a gateway
+ * A tl_notification_message with every token and insert tag already resolved -- what a gateway
  * actually sends. Content properties are mutable on purpose: listeners on PreSendEvent
  * are meant to rewrite them (add a BCC archive address, prefix a staging subject, ...).
  */

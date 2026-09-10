@@ -1,8 +1,17 @@
 <?php
 
+/*
+ * Centralized Notification Suite
+ *
+ * Package: vtinnovations/centralized-notification-suite
+ * Copyright: V&T Innovations Team
+ * Licence: proprietary
+ * Website: https://www.v-t.one
+ */
+
 declare(strict_types=1);
 
-namespace VTInnovations\SimpleNotifyBundle\Controller;
+namespace VTInnovations\CentralizedNotificationSuite\Controller;
 
 use Contao\BackendUser;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
@@ -14,13 +23,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\CsrfToken;
-use VTInnovations\SimpleNotifyBundle\Message\MessageRenderer;
-use VTInnovations\SimpleNotifyBundle\Message\PreparedMessage;
-use VTInnovations\SimpleNotifyBundle\Model\GatewayModel;
-use VTInnovations\SimpleNotifyBundle\Model\MessageModel;
-use VTInnovations\SimpleNotifyBundle\Model\NotificationModel;
-use VTInnovations\SimpleNotifyBundle\SimpleNotifyCenter;
-use VTInnovations\SimpleNotifyBundle\Token\TokenRegistry;
+use VTInnovations\CentralizedNotificationSuite\Message\MessageRenderer;
+use VTInnovations\CentralizedNotificationSuite\Message\PreparedMessage;
+use VTInnovations\CentralizedNotificationSuite\Model\GatewayModel;
+use VTInnovations\CentralizedNotificationSuite\Model\MessageModel;
+use VTInnovations\CentralizedNotificationSuite\Model\NotificationModel;
+use VTInnovations\CentralizedNotificationSuite\CentralizedNotificationSuite;
+use VTInnovations\CentralizedNotificationSuite\Token\TokenRegistry;
 
 /**
  * Sends one message to a chosen address with token values typed in by hand.
@@ -35,7 +44,7 @@ class TestSendController extends AbstractController
         private readonly ContaoFramework $framework,
         private readonly MessageRenderer $renderer,
         private readonly TokenRegistry $tokens,
-        private readonly SimpleNotifyCenter $notifyCenter,
+        private readonly CentralizedNotificationSuite $notifyCenter,
         private readonly ContaoCsrfTokenManager $tokenManager,
         private readonly Security $security,
         private readonly string $csrfTokenName,
@@ -43,15 +52,15 @@ class TestSendController extends AbstractController
     }
 
     #[Route(
-        path: '/contao/simple-notify/test-send/{id}',
-        name: 'simple_notify_test_send',
+        path: '/contao/notification/test-send/{id}',
+        name: 'centralized_notification_suite_test_send',
         requirements: ['id' => '\d+'],
         defaults: ['_scope' => 'backend', '_token_check' => false],
         methods: ['GET', 'POST'],
     )]
     public function __invoke(Request $request, int $id): Response
     {
-        $this->denyAccessUnlessGranted(ContaoCorePermissions::USER_CAN_ACCESS_MODULE, 'simple_notify');
+        $this->denyAccessUnlessGranted(ContaoCorePermissions::USER_CAN_ACCESS_MODULE, 'notification');
         $this->framework->initialize();
 
         $message = MessageModel::findByPk($id);
@@ -123,7 +132,7 @@ class TestSendController extends AbstractController
 
         $sent = $this->notifyCenter->deliver(
             new PreparedMessage($rendered, $gateway),
-            SimpleNotifyCenter::SOURCE_TEST,
+            CentralizedNotificationSuite::SOURCE_TEST,
         );
 
         return $this->form($id, $message, $used, $recipient, $sent ? $recipient : null, $sent ? null : 'sendFailed');
@@ -139,8 +148,15 @@ class TestSendController extends AbstractController
         $haystack = implode("\n", [
             (string) $message->subject,
             (string) $message->text,
-            (string) $message->html,
+            // The body the renderer will actually produce, not the raw html column: a
+            // block-composed body keeps its tokens in the block records, where scanning the
+            // column would never see them and the form would never ask for them.
+            $this->renderer->resolveBody($message),
             (string) $message->recipients,
+            // cc and bcc are token-parsed by render() but were never scanned, so a token in
+            // a BCC address reached the recipient as a literal
+            (string) $message->cc,
+            (string) $message->bcc,
             (string) $message->reply_to,
         ]);
 
@@ -177,7 +193,7 @@ class TestSendController extends AbstractController
         string|null $sentTo,
         string|null $error,
     ): string {
-        $lang = $GLOBALS['TL_LANG']['tl_simple_message'] ?? [];
+        $lang = $GLOBALS['TL_LANG']['tl_notification_message'] ?? [];
         $e = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
 
         $labels = [
@@ -216,7 +232,7 @@ class TestSendController extends AbstractController
             $fields = '<p class="sn-note">'.$e($labels['noTokens']).'</p>';
         }
 
-        $action = $this->generateUrl('simple_notify_test_send', ['id' => $id]);
+        $action = $this->generateUrl('centralized_notification_suite_test_send', ['id' => $id]);
         $rt = $e($this->tokenManager->getDefaultTokenValue());
 
         return <<<HTML
