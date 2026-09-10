@@ -49,13 +49,23 @@ class ControlWiringTest extends TestCase
 
         $this->assertNotEmpty($rendered, 'The panel renders no action buttons.');
 
+        // Checked against the handler's own allow-list rather than against the shape of an if
+        // statement. The list is what admits a submission *and* what the dispatch is written
+        // around, so membership of it is the thing that actually means "this button is wired".
+        preg_match('/private const OPERATIONS = \[(.*?)\];/s', $listener, $declared);
+
+        $this->assertNotEmpty($declared, 'The handler no longer declares its operations in one list.');
+
         foreach ($rendered as $operation) {
             $this->assertStringContainsString(
-                "'".$operation."' === \$operation",
-                $listener,
-                \sprintf('The "%s" button has no branch in the handler.', $operation),
+                "'".$operation."'",
+                $declared[1],
+                \sprintf('The "%s" button is not an operation the handler accepts.', $operation),
             );
         }
+
+        // And the guard has to be built from that list, or it could drift from the dispatch.
+        $this->assertStringContainsString('\in_array($operation, self::OPERATIONS, true)', $listener);
     }
 
     /**

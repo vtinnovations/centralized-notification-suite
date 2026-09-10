@@ -2,7 +2,6 @@
     "name": "vtinnovations/centralized-notification-suite",
     "description": "Zentrale Benachrichtigungsverwaltung für Contao 5: Formular-, Mitglieder- und Webhook-Nachrichten mit Tokens, Layouts und Versandprotokoll.",
     "type": "contao-bundle",
-    "version": "1.0.0",
     "license": "proprietary",
     "keywords": [
         "contao",

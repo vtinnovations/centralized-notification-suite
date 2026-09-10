@@ -53,6 +53,16 @@ class SettingsSectionListener
      */
     private const LEGEND = 'vtone_licence_legend';
 
+    /**
+     * The operations the panel's buttons may ask for.
+     *
+     * The one list, used to admit a submission and to dispatch it, so a button can never be
+     * rendered for something this handler does not implement.
+     *
+     * @var list<string>
+     */
+    private const OPERATIONS = ['activate', 'refresh', 'remove'];
+
     public function __construct(
         private readonly ActivationGate $gate,
         private readonly ActivationChange $change,
@@ -129,7 +139,7 @@ class SettingsSectionListener
 
         // Named operations only. Every other submit of the settings form -- Contao's own save,
         // or the panel's no-op button that catches a stray Enter -- passes straight through.
-        if (!\in_array($operation, ['activate', 'refresh', 'remove'], true)) {
+        if (!\in_array($operation, self::OPERATIONS, true)) {
             return;
         }
 
@@ -160,10 +170,10 @@ class SettingsSectionListener
                 return;
             }
 
-            if ('activate' === $operation) {
-                $this->change->activate($key);
-                Message::addConfirmation($labels['cnsActivated'] ?? 'The licence has been activated.');
-            }
+            // Only "activate" is left: the guard above admitted nothing else. Testing for it
+            // again would be a condition that can never be false.
+            $this->change->activate($key);
+            Message::addConfirmation($labels['cnsActivated'] ?? 'The licence has been activated.');
         } catch (ActivationRefused $e) {
             Message::addError($this->refusal($e->category(), $labels));
         }

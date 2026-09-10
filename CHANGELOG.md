@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.1.0]
 
 ### Added
 
@@ -46,6 +46,14 @@ All notable changes to this project are documented here. This project follows
   New platform requirements: `ext-sodium`, `ext-curl`, `ext-json`.
 
 ### Changed
+
+- `CacheClearService::__construct()` takes a `$memoryLimit` argument before `$environment`.
+  The service is autowired by argument name, so nothing inside the bundle is affected; code
+  constructing it positionally needs updating.
+
+- `composer.json` no longer carries a hard-coded `version`. The released version comes from the
+  git tag, which is what Composer and Packagist read, and keeping both in step by hand was one
+  more thing that could disagree.
 
 - **Renamed to Centralized Notification Suite.** Composer package
   `vtinnovations/contao-notification-bundle` -> `vtinnovations/centralized-notification-suite`;
